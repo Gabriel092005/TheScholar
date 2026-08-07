@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,6 +70,7 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -78,6 +79,35 @@ export function SignIn() {
       setRememberEmail(true);
     }
   }, []);
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const reason = searchParams.get("reason");
+
+    if (!error) return;
+
+    const reasonText = reason
+      ? decodeURIComponent(reason).toLowerCase()
+      : "";
+
+    if (
+      reasonText.includes("redirect_uri_mismatch") ||
+      reasonText.includes("invalid_client") ||
+      reasonText.includes("invalid_request")
+    ) {
+      toast.error("Falha ao entrar com Google. O endereço de retorno não está configurado no Google — contacta o administrador.");
+    } else if (reasonText.includes("access_denied")) {
+      toast.error("Autorização com o Google cancelada.");
+    } else if (reasonText.includes("conta_suspensa")) {
+      toast.error("A tua conta está suspensa. Contacta o suporte.");
+    } else if (reasonText.includes("invalid_state") || reasonText.includes("state")) {
+      toast.error("Sessão expirada. Tenta novamente.");
+    } else {
+      toast.error("Falha ao entrar com Google. Tenta novamente.");
+    }
+
+    navigate("/sign-in", { replace: true });
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     const token = Cookies.get("token");

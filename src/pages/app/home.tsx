@@ -558,7 +558,7 @@ export function HomePage() {
           o futuro que{" "}
           <span className="relative inline-block whitespace-nowrap">
             <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-300 bg-clip-text text-transparent">
-              merece.
+              você merece.
             </span>
             <motion.span
               aria-hidden

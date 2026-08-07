@@ -5,7 +5,7 @@ import {
   Award, GraduationCap, ArrowRight,
   Users, BookOpenText, Target,
   UserCheck, Video, FileText,
-  Sparkles, Quote, Play, Star, MapPin,
+  Sparkles, Quote, Play, MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bolsasApi } from "@/api/bolsas";
@@ -615,11 +615,6 @@ export function WelcomePreview() {
                   className="relative p-8 sm:p-10 rounded-3xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] shadow-xl shadow-gray-100/60 dark:shadow-none"
                 >
                   <Quote className="absolute top-5 right-6 h-10 w-10 text-emerald-200 dark:text-emerald-800/30" />
-                  <div className="flex items-center gap-2 mb-4">
-                    {Array.from({ length: 5 }).map((_, s) => (
-                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
                   <p className="text-gray-700 dark:text-zinc-200 text-base sm:text-lg leading-relaxed italic">
                     &ldquo;{currentTestimonial.texto}&rdquo;
                   </p>

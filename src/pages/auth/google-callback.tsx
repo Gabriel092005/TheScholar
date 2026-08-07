@@ -18,8 +18,13 @@ export function GoogleCallback() {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (!token) {
-      navigate("/sign-in?error=google_auth_failed");
+    const error = searchParams.get("error");
+    const reason = searchParams.get("reason");
+
+    if (error || !token) {
+      navigate(`/sign-in?error=${error || "google_auth_failed"}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`, {
+        replace: true,
+      });
       return;
     }
 
@@ -27,7 +32,7 @@ export function GoogleCallback() {
       const decoded = jwtDecode<MyTokenPayload>(token);
       const isExpired = Date.now() >= decoded.exp * 1000;
       if (isExpired) {
-        navigate("/sign-in?error=token_expired");
+        navigate("/sign-in?error=token_expired", { replace: true });
         return;
       }
 
@@ -44,7 +49,7 @@ export function GoogleCallback() {
         navigate("/", { replace: true });
       }
     } catch {
-      navigate("/sign-in?error=invalid_token");
+      navigate("/sign-in?error=invalid_token", { replace: true });
     }
   }, [searchParams, navigate, queryClient]);
 
