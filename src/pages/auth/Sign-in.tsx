@@ -116,7 +116,7 @@ export function SignIn() {
     if (!isValidEmail(email)) return triggerShake("Insira um e-mail válido");
     setIsLoading(true);
     try {
-      await requestMagicLink(email);
+      await requestMagicLink(email.trim().toLowerCase());
       setMagicLinkSent(true);
       toast.success("Link de acesso enviado! Verifique o seu email.");
     } catch {
@@ -136,11 +136,11 @@ export function SignIn() {
     setIsLoading(true);
 
     try {
-      const response = await signIn(email, password);
+      const response = await signIn(email.trim().toLowerCase(), password);
       Cookies.set("token", response.token, { expires: 7, path: "/" });
 
       if (rememberEmail) {
-        localStorage.setItem("rememberedEmail", email);
+        localStorage.setItem("rememberedEmail", email.trim().toLowerCase());
       } else {
         localStorage.removeItem("rememberedEmail");
       }

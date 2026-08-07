@@ -16,9 +16,9 @@ export function AppLayoutAdmin() {
 
   useEffect(() => {
     if (!user && !hasToken) {
-      navigate("/welcome", { replace: true });
+      navigate("/", { replace: true });
     } else if (!user && !isLoading) {
-      navigate("/welcome", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, hasToken, isLoading, navigate]);
 

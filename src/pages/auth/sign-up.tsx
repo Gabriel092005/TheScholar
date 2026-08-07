@@ -87,7 +87,7 @@ export function SignUp() {
 
   // ── useMutation ──────────────────────────────────────
   const { mutate, isPending } = useMutation({
-    mutationFn: () => signUp({ nome, email, phone, password }),
+    mutationFn: () => signUp({ nome, email: email.trim().toLowerCase(), phone, password }),
 
     onSuccess: async (response) => {
       Cookies.set("token", response.token, { expires: 7, path: "/" });

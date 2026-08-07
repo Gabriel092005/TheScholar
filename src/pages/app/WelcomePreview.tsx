@@ -14,6 +14,7 @@ import { homeBannersApi } from "@/api/home-banners";
 import { api } from "@/lib/axios";
 import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/header";
+import { AnimatedLetters } from "@/components/AnimatedLetters";
 
 import img1 from "@/assets/WhatsApp Image 2026-04-06 512.26.31.jpeg";
 import img2 from "@/assets/CORRECTA.jpeg";
@@ -62,32 +63,32 @@ const features = [
   {
     icon: Award,
     title: "Bolsas de Estudo",
-    desc: "Centenas de oportunidades em universidades de prestígio, filtradas para o seu perfil.",
+    desc: "Centenas de oportunidades em universidades de referência, filtradas para o teu perfil.",
   },
   {
     icon: UserCheck,
     title: "Entrevista com IA",
-    desc: "Prepare-se com simulações inteligentes de entrevistas reais de universidades.",
+    desc: "Treina com simulações inteligentes de entrevistas reais de universidades.",
   },
   {
     icon: GraduationCap,
     title: "Preparação Pessoal",
-    desc: "Cursos e mentorias para fortalecer a sua candidatura e aumentar suas chances.",
+    desc: "Cursos e mentorias para fortalecer a tua candidatura e melhorar as tuas hipóteses.",
   },
   {
     icon: Video,
     title: "Aulas ao Vivo",
-    desc: "Aulas ao vivo com especialistas que conhecem o processo de candidatura.",
+    desc: "Aulas ao vivo com quem já viveu o processo de candidatura do início ao fim.",
   },
   {
     icon: FileText,
     title: "Análise de Documentos",
-    desc: "Análise inteligente dos seus documentos com sugestões práticas de melhoria.",
+    desc: "Revisão atenta dos teus documentos, com sugestões práticas de melhoria.",
   },
   {
     icon: Users,
     title: "Comunidades",
-    desc: "Conecte-se com estudantes angolanos que partilham os mesmos objectivos.",
+    desc: "Conversa com estudantes angolanos que partilham os mesmos objectivos.",
   },
 ];
 
@@ -252,7 +253,7 @@ export function WelcomePreview() {
               <span className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-[11px] font-bold tracking-widest uppercase text-emerald-300 backdrop-blur-md overflow-hidden">
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-emerald-300/25 to-transparent animate-pulse" />
                 <Sparkles className="h-3.5 w-3.5" />
-                Plataforma #1 para estudantes angolanos
+                Feito para estudantes angolanos
               </span>
             </motion.div>
 
@@ -260,22 +261,22 @@ export function WelcomePreview() {
               variants={fade(0.05)}
               className="text-[2rem] leading-[1.05] sm:text-[2.8rem] md:text-[3.6rem] lg:text-[4.6rem] font-black tracking-tight text-white max-w-5xl"
             >
-              O futuro que você{" "}
-              <motion.span
-                className="text-white/30 inline-block"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              >
-                merece
-              </motion.span>{" "}
-              começa com a{" "}
+              <AnimatedLetters text="O futuro que tu mereces" className="inline-block" delay={0.1} />{" "}
+              <AnimatedLetters text="começa com a" className="inline-block" delay={0.1} />{" "}
               <span className="relative inline-block whitespace-nowrap">
                 <motion.span
                   className="inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent bg-[length:200%_auto]"
                   animate={{ backgroundPosition: ["0% center", "200% center"] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                 >
-                  bolsa certa.
+                  <AnimatedLetters
+                    text="bolsa certa."
+                    className="inline-block"
+                    delay={0.1}
+                    loop
+                    waveAmplitude={4}
+                    waveDuration={4}
+                  />
                 </motion.span>
                 <motion.span
                   aria-hidden
@@ -294,8 +295,8 @@ export function WelcomePreview() {
               variants={fade(0.12)}
               className="text-sm sm:text-base lg:text-lg font-light leading-relaxed max-w-xl text-white/70"
             >
-              Tecnologia de ponta e mentoria especializada para conectar
-              talentos angolanos às melhores universidades do mundo.
+              Ajudamos-te, passo a passo, a encontrar e conquistar a
+              bolsa que pode mudar a tua vida — com mentoria de quem já fez esse caminho.
             </motion.p>
 
             <motion.div
@@ -307,7 +308,7 @@ export function WelcomePreview() {
                 onClick={() => navigate("/sign-up")}
                 className="group h-13 sm:h-14 px-8 sm:px-10 text-base font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl shadow-[0_8px_32px_rgba(52,211,153,0.35)] hover:shadow-[0_14px_44px_rgba(52,211,153,0.5)] active:scale-[0.97] transition-all duration-200"
               >
-                Comece Agora — É Grátis
+                Começa agora — é grátis
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -434,10 +435,11 @@ export function WelcomePreview() {
               Tudo num só lugar
             </span>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
-              Ferramentas para cada etapa da sua jornada
+              <AnimatedLetters text="Cada etapa da tua jornada" className="inline-block" />{" "}
+              <AnimatedLetters text="num só lugar" className="inline-block text-emerald-600 dark:text-emerald-400" />
             </h2>
             <p className="text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
-              Do primeiro passo até conquistar a sua vaga — tudo o que precisa, reunido numa plataforma só.
+              Do primeiro passo até à conquista da tua vaga — tudo o que precisas, reunido num só lugar.
             </p>
           </motion.div>
 
@@ -491,7 +493,7 @@ export function WelcomePreview() {
                 Oportunidades em Destaque
               </h2>
               <p className="text-gray-400 dark:text-zinc-500 mt-2 text-sm">
-                As bolsas mais relevantes, seleccionadas para o seu perfil.
+                As bolsas mais relevantes, seleccionadas para o teu perfil.
               </p>
             </motion.div>
 
@@ -595,7 +597,7 @@ export function WelcomePreview() {
                 Depoimentos
               </span>
               <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                O que dizem os nossos alunos
+                <AnimatedLetters text="O que dizem os nossos alunos" className="inline-block" />
               </h2>
               <p className="text-gray-400 dark:text-zinc-500 mt-3 text-sm max-w-xl mx-auto">
                 Histórias reais de quem já está a transformar a vida através da educação.
@@ -684,11 +686,11 @@ export function WelcomePreview() {
               <GraduationCap className="h-8 w-8 text-white" />
             </motion.div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-5">
-              Comece hoje a sua jornada
+              <AnimatedLetters text="Começa hoje a tua jornada" className="inline-block" />
             </h2>
             <p className="text-emerald-100/75 text-sm sm:text-base max-w-lg mx-auto mb-10 leading-relaxed">
-              Junte-se a milhares de estudantes angolanos que já conquistaram
-              uma vaga no exterior. O registo é gratuito e leva menos de 2 minutos.
+              Entra para o grupo de estudantes angolanos que já conquistaram
+              uma vaga no estrangeiro. Criar conta é grátis e leva menos de dois minutos.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
@@ -696,7 +698,7 @@ export function WelcomePreview() {
                 onClick={() => navigate("/sign-up")}
                 className="h-14 px-10 sm:px-12 text-base font-bold bg-white text-emerald-700 hover:bg-emerald-50 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_44px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
               >
-                Criar Minha Conta
+                Criar a minha conta
                 <ArrowRight className="ml-2.5 h-5 w-5" />
               </Button>
               <Button
@@ -705,7 +707,7 @@ export function WelcomePreview() {
                 onClick={() => navigate("/sign-in")}
                 className="h-14 px-10 sm:px-12 text-base font-semibold border-2 border-white/30 text-white bg-white/5 hover:bg-white/15 hover:border-white/50 rounded-2xl active:scale-[0.97] transition-all duration-200"
               >
-                Entrar na Minha Conta
+                Entrar na minha conta
               </Button>
             </div>
           </motion.div>
@@ -726,7 +728,7 @@ export function WelcomePreview() {
                 <span className="font-bold text-white text-sm">Afroscholars</span>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed max-w-xs">
-                Conectando talentos angolanos às melhores oportunidades académicas do mundo desde 2024.
+                A ajudar estudantes angolanos a chegar às melhores universidades do mundo desde 2024.
               </p>
             </div>
 

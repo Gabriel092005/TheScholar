@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthLayout }      from './pages/_layouts/auth';
-import { AppLayoutAdmin }  from './pages/_layouts/app';
+import { RootGate }        from './pages/app/RootGate';
 import { SignIn }          from './pages/auth/Sign-in';
 import { SignUp }          from './pages/auth/sign-up';
 import { ForgotPassword }  from './pages/auth/ForgotPassword';
@@ -8,7 +8,6 @@ import { ResetPassword }   from './pages/auth/ResetPassword';
 import { VerifyMagicLink } from './pages/auth/verify-magic-link';
 import { GoogleCallback } from './pages/auth/google-callback';
 import { HomePage } from './pages/app/home';
-import { WelcomePreview } from './pages/app/WelcomePreview';
 import { SettingsPage } from './pages/app/settings';
 import { ComunidadesPage } from './pages/app/comunidades/index';
 import { ComunidadeChatPage } from './pages/app/comunidades/[id]';
@@ -54,7 +53,7 @@ export const router = createBrowserRouter([
 
   {
     path: '/',
-    element: <AppLayoutAdmin />,
+    element: <RootGate />,
     children: [
       { index: true,                             element: <HomePage/> },
       { path: 'settings',                        element: <SettingsPage /> },
@@ -131,9 +130,10 @@ export const router = createBrowserRouter([
   },
 
   // ── Welcome Preview ─────────────────────────────────────
+  // Legado: aponta para a raiz, onde o RootGate decide a tela
   {
     path: '/welcome',
-    element: <WelcomePreview />,
+    element: <Navigate to="/" replace />,
   },
 
   // ── Fallback ──────────────────────────────────────────────
