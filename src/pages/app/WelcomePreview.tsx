@@ -5,7 +5,7 @@ import {
   Award, GraduationCap, ArrowRight,
   Users, BookOpenText, Target,
   UserCheck, Video, FileText,
-  Sparkles, Quote, Play, MapPin,
+  Quote, Play, MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bolsasApi } from "@/api/bolsas";
@@ -252,7 +252,6 @@ export function WelcomePreview() {
             <motion.div variants={fade(0)} className="flex items-center gap-3 mb-6">
               <span className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-[11px] font-bold tracking-widest uppercase text-emerald-300 backdrop-blur-md overflow-hidden">
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-emerald-300/25 to-transparent animate-pulse" />
-                <Sparkles className="h-3.5 w-3.5" />
                 Feito para estudantes angolanos
               </span>
             </motion.div>
