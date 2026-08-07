@@ -49,7 +49,7 @@ export function GoogleCallback() {
   }, [searchParams, navigate, queryClient]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
         <p className="text-sm text-zinc-500">Autenticando com Google...</p>

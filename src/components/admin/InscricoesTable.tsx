@@ -15,6 +15,7 @@ import {
   Mail,
   Phone,
   Trash2,
+  Clock,
   LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,17 @@ function makeUrl(path?: string) {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   return `${api.defaults.baseURL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+function formatAgendamento(inscricao: BolsaInscricao) {
+  if (!inscricao.dataAgendada) return null;
+  return new Date(inscricao.dataAgendada).toLocaleString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 interface InscricoesTableProps {
@@ -294,7 +306,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                     <tr className="border-b border-gray-100 dark:border-zinc-800">
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Candidato</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">{label === "Consultoria" ? "Consultoria" : label === "Mentoria" ? "Mentoria" : "Bolsa"}</th>
-                      <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Data</th>
+                      <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">{label === "Consultoria" ? "Agendada" : "Data"}</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Status</th>
                       <th className="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Ações</th>
                     </tr>
@@ -334,7 +346,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                           </td>
                           <td className="px-5 py-4">
                             <span className="text-sm text-gray-500 dark:text-zinc-500 whitespace-nowrap">
-                              {new Date(inscricao.created_at).toLocaleDateString("pt-PT")}
+                              {formatAgendamento(inscricao) || new Date(inscricao.created_at).toLocaleDateString("pt-PT")}
                             </span>
                           </td>
                           <td className="px-5 py-4">
@@ -390,9 +402,9 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xs text-gray-500 dark:text-zinc-500">Data</p>
+                          <p className="text-xs text-gray-500 dark:text-zinc-500">{label === "Consultoria" ? "Agendada" : "Data"}</p>
                           <p className="text-sm text-gray-700 dark:text-zinc-300">
-                            {new Date(inscricao.created_at).toLocaleDateString("pt-PT")}
+                            {formatAgendamento(inscricao) || new Date(inscricao.created_at).toLocaleDateString("pt-PT")}
                           </p>
                         </div>
                       </div>
@@ -456,6 +468,12 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                       {inscricao.bolsa?.instituicao && (
                         <p className="text-xs text-gray-500 dark:text-zinc-500 mt-1">
                           {inscricao.bolsa.instituicao} • {inscricao.bolsa.pais}
+                        </p>
+                      )}
+                      {tipoInteresse === "CONSULTORIA" && formatAgendamento(inscricao) && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1.5 font-semibold">
+                          <Clock size={12} className="shrink-0" />
+                          {formatAgendamento(inscricao)} · {inscricao.duracaoMinutos || 60} min
                         </p>
                       )}
                     </div>

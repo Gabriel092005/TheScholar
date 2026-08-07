@@ -8,12 +8,14 @@ import { ResetPassword }   from './pages/auth/ResetPassword';
 import { VerifyMagicLink } from './pages/auth/verify-magic-link';
 import { GoogleCallback } from './pages/auth/google-callback';
 import { HomePage } from './pages/app/home';
+import { WelcomePreview } from './pages/app/WelcomePreview';
 import { SettingsPage } from './pages/app/settings';
 import { ComunidadesPage } from './pages/app/comunidades/index';
 import { ComunidadeChatPage } from './pages/app/comunidades/[id]';
 import { DepoimentosPage } from './pages/app/depoimentos';
 import { HistoriasPage } from './pages/app/historias';
 import { MinhasAtividadesPage } from './pages/app/minhas-atividades';
+import { CalendarioConsultorias } from './pages/app/consultorias/CalendarioConsultorias';
 
 import { ScholarshipApp } from './pages/app/scholarShip/ScholarshipApp';
 import { ScholarshipDetailPage } from './pages/app/scholarShip/scholarShipDetailsPage';
@@ -67,6 +69,7 @@ export const router = createBrowserRouter([
       { path: 'comunidades',                   element: <ComunidadesPage /> },
       { path: 'comunidades/:id',               element: <ComunidadeChatPage /> },
       { path: 'minhas-atividades',             element: <MinhasAtividadesPage /> },
+      { path: 'minhas-consultorias',           element: <CalendarioConsultorias /> },
       { path: 'depoimentos',                   element: <DepoimentosPage /> },
       { path: 'historias',                     element: <HistoriasPage /> },
       { path: 'novidades',                     element: <NovidadesPage /> },
@@ -125,6 +128,12 @@ export const router = createBrowserRouter([
   {
     path: '/auth/google-callback',
     element: <GoogleCallback />,
+  },
+
+  // ── Welcome Preview ─────────────────────────────────────
+  {
+    path: '/welcome',
+    element: <WelcomePreview />,
   },
 
   // ── Fallback ──────────────────────────────────────────────

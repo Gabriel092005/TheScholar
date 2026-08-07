@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, FileText, CheckCircle2, Clock,
@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { bolsasApi } from "@/api/bolsas";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
@@ -31,6 +31,7 @@ interface ScholarshipDetailProps {
   scholarship: Scholarship;
   onBack: () => void;
   bolsaId?: string;
+  autoServico?: TipoInteresse;
 }
 
 type PaymentMethod = "EXPRESS" | "TRANSFERENCIA" | "MULTICAIXA";
@@ -43,7 +44,10 @@ const fadeUp = {
 
 type TipoInteresse = "CONSULTORIA" | "MENTORIA" | "INSCRICAO";
 
-export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipDetailProps) {
+const CONSULTORIA_PRECO = 5000;
+const CONSULTORIA_DURACAO_MINUTOS = 60;
+
+export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }: ScholarshipDetailProps) {
   const [showForm, setShowForm] = useState(false);
   const [inscricaoError, setInscricaoError] = useState<string | null>(null);
   const [inscricaoSuccess, setInscricaoSuccess] = useState(false);
@@ -57,8 +61,23 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
   const [metodoPagamento, setMetodoPagamento] = useState<PaymentMethod>("EXPRESS");
   const [referenciaPagamento, setReferenciaPagamento] = useState("");
   const [comprovativo, setComprovativo] = useState<File | null>(null);
+  const [dataSelecionada, setDataSelecionada] = useState<string | null>(null);
+  const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null);
 
   const isDemoToken = Cookies.get("token")?.startsWith("demo.");
+
+  useEffect(() => {
+    if (autoServico) {
+      setTipoInteresse(autoServico);
+      setShowForm(true);
+    }
+  }, [autoServico]);
+
+  const { data: slotsDias, isLoading: slotsLoading, isError: slotsError, refetch: refetchSlots } = useQuery({
+    queryKey: ["consultoria-slots", bolsaId],
+    queryFn: () => bolsasApi.consultoriaSlots(bolsaId!),
+    enabled: !!bolsaId && tipoInteresse === "CONSULTORIA" && showForm,
+  });
 
   const inscricao = useMutation({
     mutationFn: async () => {
@@ -79,6 +98,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
         ? `Interesse: Consultoria - ${observacaoConsultoria}`
         : `Pagamento via ${metodoPagamento} - Ref: ${referenciaPagamento}`
       );
+      if (tipoInteresse === "CONSULTORIA" && dataSelecionada && horaSelecionada) {
+        payload.append("dataAgendada", `${dataSelecionada}T${horaSelecionada}:00`);
+      }
       if (comprovativo) payload.append("comprovativo", comprovativo);
       documentos.forEach((doc) => {
         if (doc.file) {
@@ -93,7 +115,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
       setInscricaoSuccess(true);
       setInscricaoError(null);
       setShowForm(false);
-      toast.success("Inscrição realizada com sucesso!");
+      toast.success(tipoInteresse === "CONSULTORIA" ? "Consultoria agendada com sucesso!" : "Inscrição realizada com sucesso!");
     },
     onError: (err: any) => {
       const message = err?.response?.data?.message || err.message || "Erro ao realizar inscrição";
@@ -116,8 +138,10 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
         toast.error("Descreva a sua dúvida ou consulta");
         return;
       }
-      inscricao.mutate();
-      return;
+      if (!dataSelecionada || !horaSelecionada) {
+        toast.error("Selecione a data e hora da consultoria");
+        return;
+      }
     }
     if (!referenciaPagamento.trim()) {
       toast.error("Informe a referência do pagamento");
@@ -133,9 +157,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
   ];
 
   const servicosDisponiveis = useMemo(() => {
-    const servicos: { value: TipoInteresse; icon: React.ElementType; titulo: string; preco: string }[] = [];
+    const servicos: { value: TipoInteresse; icon: React.ElementType; titulo: string; preco: string; sub?: string }[] = [];
     if (scholarship.consultoriaPrice !== undefined) {
-      servicos.push({ value: "CONSULTORIA", icon: MessageSquare, titulo: "Consultoria", preco: formatPrice(scholarship.consultoriaPrice, scholarship.currency) });
+      servicos.push({ value: "CONSULTORIA", icon: MessageSquare, titulo: "Consultoria", preco: formatPrice(CONSULTORIA_PRECO, scholarship.currency), sub: "Sessão de 60 minutos" });
     }
     if (scholarship.mentoriaPrice !== undefined) {
       servicos.push({ value: "MENTORIA", icon: Users, titulo: "Mentoria", preco: formatPrice(scholarship.mentoriaPrice, scholarship.currency) });
@@ -364,12 +388,12 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                       <div className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
                         <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-zinc-400">Consultoria</span>
+                      <span className="text-sm text-gray-600 dark:text-zinc-400">
+                        Consultoria <span className="text-[10px] text-gray-400 dark:text-zinc-600">(60 min)</span>
+                      </span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {scholarship.consultoriaPrice > 0
-                        ? `AOA ${scholarship.consultoriaPrice.toLocaleString()}`
-                        : "Grátis"}
+                      AOA {CONSULTORIA_PRECO.toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -533,7 +557,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3">
-                        {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco }) => (
+                        {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco, sub }) => (
                           <button
                             key={value}
                             type="button"
@@ -566,6 +590,12 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                                   {preco}
                                 </span>
                               </div>
+                              {sub && (
+                                <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-0.5 flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {sub}
+                                </p>
+                              )}
                             </div>
                             <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                               tipoInteresse === value
@@ -639,6 +669,124 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                     </section>
                   )}
 
+                  { tipoInteresse === "CONSULTORIA" && (
+                    <section className="pt-2 border-t border-gray-100 dark:border-white/[0.06]">
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-bold text-emerald-600 dark:text-emerald-400">4</span>
+                        Agendar Consultoria
+                      </h3>
+
+                      <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-900/40 rounded-xl px-4 py-3 mb-4">
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          {CONSULTORIA_DURACAO_MINUTOS} minutos
+                        </span>
+                        <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                          {formatPrice(CONSULTORIA_PRECO, scholarship.currency)}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-gray-500 dark:text-zinc-500 mb-3 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 shrink-0" />
+                        Segunda a sexta, entre as 09:00 e as 17:00. Escolha a data e a hora.
+                      </p>
+
+                      {slotsLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
+                        </div>
+                      ) : slotsError ? (
+                        <div className="text-center py-6 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
+                          <p className="text-xs text-gray-500 dark:text-zinc-500 mb-2">Não foi possível carregar os horários.</p>
+                          <button
+                            type="button"
+                            onClick={() => refetchSlots()}
+                            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                          >
+                            Tentar novamente
+                          </button>
+                        </div>
+                      ) : !slotsDias || slotsDias.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
+                          <p className="text-xs text-gray-500 dark:text-zinc-500">Sem horários disponíveis nas próximas semanas.</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                            {slotsDias.map((d) => {
+                              const dt = new Date(`${d.data}T00:00:00`);
+                              const selecionado = dataSelecionada === d.data;
+                              return (
+                                <button
+                                  key={d.data}
+                                  type="button"
+                                  onClick={() => { setDataSelecionada(d.data); setHoraSelecionada(null); }}
+                                  className={`shrink-0 flex flex-col items-center gap-0.5 px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                                    selecionado
+                                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                                      : "border-gray-200 dark:border-white/[0.08] hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
+                                  }`}
+                                >
+                                  <span className={`text-[10px] font-bold uppercase ${
+                                    selecionado ? "text-emerald-700 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"
+                                  }`}>
+                                    {dt.toLocaleDateString("pt-PT", { weekday: "short" })}
+                                  </span>
+                                  <span className={`text-xs font-semibold ${
+                                    selecionado ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-zinc-300"
+                                  }`}>
+                                    {dt.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {dataSelecionada && (
+                            <div className="mt-3">
+                              <p className="text-[11px] text-gray-500 dark:text-zinc-500 font-medium mb-2">Horários disponíveis</p>
+                              {(() => {
+                                const dia = slotsDias.find((d) => d.data === dataSelecionada);
+                                if (!dia || dia.horarios.length === 0) {
+                                  return <p className="text-xs text-gray-400 dark:text-zinc-600">Sem horários disponíveis neste dia.</p>;
+                                }
+                                return (
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {dia.horarios.map((h) => (
+                                      <button
+                                        key={h}
+                                        type="button"
+                                        onClick={() => setHoraSelecionada(h)}
+                                        className={`py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
+                                          horaSelecionada === h
+                                            ? "border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                                            : "border-gray-200 dark:border-white/[0.08] text-gray-700 dark:text-zinc-300 hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
+                                        }`}
+                                      >
+                                        {h}
+                                      </button>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+
+                          {dataSelecionada && horaSelecionada && (
+                            <div className="mt-4 flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl px-4 py-3">
+                              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(`${dataSelecionada}T00:00:00`).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" })}{" "}
+                                às {horaSelecionada}
+                              </div>
+                              <Clock className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </section>
+                  )}
+
                   {tipoInteresse && tipoInteresse !== "CONSULTORIA" && (
                   <section className="pt-2 border-t border-gray-100 dark:border-white/[0.06]">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4 flex items-center gap-2">
@@ -695,12 +843,25 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                   </section>
                   )}
 
-                  {tipoInteresse && tipoInteresse !== "CONSULTORIA" && (
+                  {tipoInteresse && (
                   <section className="pt-2 border-t border-gray-100 dark:border-white/[0.06]">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4 flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-bold text-emerald-600 dark:text-emerald-400">4</span>
+                      <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                        {tipoInteresse === "CONSULTORIA" ? "5" : "4"}
+                      </span>
                       Pagamento
                     </h3>
+
+                    {tipoInteresse === "CONSULTORIA" && (
+                      <div className="flex items-center justify-between bg-gray-50 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-4">
+                        <span className="text-xs text-gray-500 dark:text-zinc-500">
+                          Consultoria de {CONSULTORIA_DURACAO_MINUTOS} minutos
+                        </span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">
+                          {formatPrice(CONSULTORIA_PRECO, scholarship.currency)}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-3 gap-2.5 mb-4">
                       {paymentMethods.map((method) => (
@@ -794,8 +955,8 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId }: ScholarshipD
                       </>
                     ) : tipoInteresse === "CONSULTORIA" ? (
                       <>
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Enviar Dúvida
+                        <Clock className="h-4 w-4 mr-2" />
+                        Agendar Consultoria
                       </>
                     ) : tipoInteresse === "MENTORIA" ? (
                       <>

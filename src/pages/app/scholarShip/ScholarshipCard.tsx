@@ -4,7 +4,6 @@ import {
   Calendar,
   GraduationCap,
   ArrowRight,
-  CreditCard,
 } from "lucide-react";
 import { Scholarship } from "./types";
 
@@ -87,20 +86,6 @@ export function ScholarshipCard({
             )}
           </div>
 
-          {/* Inscription Price */}
-          {scholarship.inscriptionPrice !== undefined && (
-            <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-500/5 border border-emerald-100/60 dark:border-emerald-500/10">
-              <CreditCard className="h-3 w-3 text-emerald-500 shrink-0" />
-              <span className="text-gray-600 dark:text-zinc-400">
-                Inscrição:{" "}
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {scholarship.inscriptionPrice > 0
-                    ? `AOA ${scholarship.inscriptionPrice.toLocaleString()}`
-                    : "Grátis"}
-                </span>
-              </span>
-            </div>
-          )}
         </div>
 
         {/* CTA */}

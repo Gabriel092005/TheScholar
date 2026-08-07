@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useRevalidator } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,7 +70,6 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const revalidator = useRevalidator();
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -146,7 +145,6 @@ export function SignIn() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      revalidator.revalidate();
       toast.success("Bem-vindo de volta!");
 
       if (response.user.role === "ADMIN") {
@@ -370,7 +368,7 @@ export function SignIn() {
                 <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-                <span className="bg-white dark:bg-zinc-950 px-3 text-zinc-400 font-bold">ou</span>
+                <span className="bg-background px-3 text-zinc-400 font-bold">ou</span>
               </div>
             </div>
 

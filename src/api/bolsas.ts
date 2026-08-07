@@ -47,6 +47,8 @@ export interface BolsaInscricao {
   metodoPagamento?: string;
   referenciaPagamento?: string;
   comprovativoUrl?: string;
+  dataAgendada?: string;
+  duracaoMinutos?: number;
   created_at: string;
   updated_at: string;
   bolsa?: Bolsa;
@@ -57,6 +59,11 @@ export interface BolsaInscricao {
     phone?: string;
     image_path?: string;
   };
+}
+
+export interface ConsultoriaSlot {
+  data: string;
+  horarios: string[];
 }
 
 export const bolsasApi = {
@@ -101,6 +108,11 @@ export const bolsasApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
+  },
+
+  consultoriaSlots: async (id: string) => {
+    const { data } = await api.get<{ dias: ConsultoriaSlot[] }>(`/bolsas/${id}/consultoria/slots`);
+    return data.dias;
   },
 
   listMinhasInscricoes: async (params?: { status?: string }) => {

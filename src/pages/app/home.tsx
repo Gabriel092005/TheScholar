@@ -476,7 +476,7 @@ export function HomePage() {
   });
 
   return (
-    <div className="bg-white dark:bg-[#111113] text-gray-900 dark:text-white">
+    <div className="bg-background text-gray-900 dark:text-white">
 
       {/* ══════════════════════════════════════════
           1. HERO

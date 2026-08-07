@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useRevalidator } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -74,7 +74,6 @@ export function SignUp() {
   const [password,       setPassword]       = useState("");
 
   const navigate    = useNavigate();
-  const revalidator = useRevalidator();
   const strength    = getPasswordStrength(password);
 
   // ── Shake helper ─────────────────────────────────────
@@ -92,7 +91,6 @@ export function SignUp() {
 
     onSuccess: async (response) => {
       Cookies.set("token", response.token, { expires: 7, path: "/" });
-      revalidator.revalidate();
 
       setIsSuccess(true);
       toast.success("Conta criada com sucesso!", {
@@ -117,7 +115,6 @@ export function SignUp() {
             exp: Math.floor(Date.now() / 1000) + 86400,
           }));
         Cookies.set("token", demoToken, { expires: 7, path: "/" });
-        revalidator.revalidate();
         toast.success("Conta criada (modo demonstração)!", {
           description: `Bem-vindo, ${nome.split(" ")[0]}!`,
         });

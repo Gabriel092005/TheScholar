@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { bolsasApi, type Bolsa } from "@/api/bolsas";
 import { ScholarshipDetail } from "./ScholarshipDetail";
@@ -74,6 +74,7 @@ function mapBolsaToScholarship(bolsa: Bolsa) {
 export function ScholarshipDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { data: bolsa, isLoading, error } = useQuery({
     queryKey: ["bolsa", id],
@@ -119,11 +120,17 @@ export function ScholarshipDetailPage() {
 
   const scholarship = mapBolsaToScholarship(bolsa);
 
+  const servicoParam = searchParams.get("servico");
+  const autoServico = (servicoParam === "consultoria" || servicoParam === "mentoria" || servicoParam === "inscricao")
+    ? servicoParam.toUpperCase() as "CONSULTORIA" | "MENTORIA" | "INSCRICAO"
+    : undefined;
+
   return (
     <ScholarshipDetail
       scholarship={scholarship}
       onBack={() => navigate("/bolsas")}
       bolsaId={id}
+      autoServico={autoServico}
     />
   );
 }

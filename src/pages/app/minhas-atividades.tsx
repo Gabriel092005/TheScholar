@@ -242,7 +242,9 @@ function MinhasInscricoesTab() {
                 {insc.bolsa?.titulo || "Bolsas"}
               </p>
               <p className="text-[11px] text-gray-500 dark:text-zinc-500">
-                {new Date(insc.created_at).toLocaleDateString("pt-PT")}
+                {insc.tipoInteresse === "CONSULTORIA" && insc.dataAgendada
+                  ? `Agendada: ${new Date(insc.dataAgendada).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                  : new Date(insc.created_at).toLocaleDateString("pt-PT")}
               </p>
             </div>
             <div className="shrink-0 flex items-center gap-3">

@@ -239,7 +239,7 @@ export function ScholarshipAIChat({ bolsaId, bolsaTitulo, global }: Props) {
                     </p>
                     <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-[240px]">
                       {global
-                        ? "Requisitos, prazos, comparar bolsas, recomendações personalizadas e mais."
+                        ? "Especialista em bolsas de estudo, universidades e candidaturas."
                         : "Requisitos, prazos, elegibilidade, documentos e mais."}
                     </p>
                   </div>
@@ -294,7 +294,7 @@ export function ScholarshipAIChat({ bolsaId, bolsaTitulo, global }: Props) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={global ? "Pergunte sobre qualquer bolsa..." : "Faça uma pergunta..."}
+                  placeholder={global ? "Pergunte sobre bolsas de estudo..." : "Faça uma pergunta..."}
                   disabled={loading}
                   className="flex-1 h-10 px-4 text-sm rounded-xl
                     bg-gray-50 dark:bg-white/[0.04]

@@ -36,7 +36,7 @@ export function VerifyMagicLink() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="text-center space-y-4 max-w-sm">
         {status === "loading" && (
           <>
