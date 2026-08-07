@@ -63,17 +63,17 @@ const features = [
   {
     icon: Award,
     title: "Bolsas de Estudo",
-    desc: "Centenas de oportunidades em universidades de referência, filtradas para o teu perfil.",
+    desc: "Centenas de oportunidades em universidades de referência, filtradas para o seu perfil.",
   },
   {
     icon: UserCheck,
     title: "Entrevista com IA",
-    desc: "Treina com simulações inteligentes de entrevistas reais de universidades.",
+    desc: "Treine com simulações inteligentes de entrevistas reais de universidades.",
   },
   {
     icon: GraduationCap,
     title: "Preparação Pessoal",
-    desc: "Cursos e mentorias para fortalecer a tua candidatura e melhorar as tuas hipóteses.",
+    desc: "Cursos e mentorias para fortalecer a sua candidatura e melhorar as suas hipóteses.",
   },
   {
     icon: Video,
@@ -83,12 +83,12 @@ const features = [
   {
     icon: FileText,
     title: "Análise de Documentos",
-    desc: "Revisão atenta dos teus documentos, com sugestões práticas de melhoria.",
+    desc: "Revisão atenta dos seus documentos, com sugestões práticas de melhoria.",
   },
   {
     icon: Users,
     title: "Comunidades",
-    desc: "Conversa com estudantes angolanos que partilham os mesmos objectivos.",
+    desc: "Converse com estudantes angolanos que partilham os mesmos objectivos.",
   },
 ];
 
@@ -261,23 +261,18 @@ export function WelcomePreview() {
               variants={fade(0.05)}
               className="text-[2rem] leading-[1.05] sm:text-[2.8rem] md:text-[3.6rem] lg:text-[4.6rem] font-black tracking-tight text-white max-w-5xl"
             >
-              <AnimatedLetters text="O futuro que tu mereces" className="inline-block" delay={0.1} />{" "}
-              <AnimatedLetters text="começa com a" className="inline-block" delay={0.1} />{" "}
+              <AnimatedLetters text="Comece hoje a sua preparação e conquiste várias bolsas de estudo, intercâmbios, estágios e oportunidades no exterior —" className="inline-block" delay={0.1} />{" "}
+              <AnimatedLetters text="tudo começa com a" className="inline-block" delay={0.1} />{" "}
               <span className="relative inline-block whitespace-nowrap">
-                <motion.span
-                  className="inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent bg-[length:200%_auto]"
-                  animate={{ backgroundPosition: ["0% center", "200% center"] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                >
-                  <AnimatedLetters
-                    text="bolsa certa."
-                    className="inline-block"
-                    delay={0.1}
-                    loop
-                    waveAmplitude={4}
-                    waveDuration={4}
-                  />
-                </motion.span>
+                <AnimatedLetters
+                  text="bolsa certa."
+                  className="inline-block"
+                  letterClassName="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent"
+                  delay={0.1}
+                  loop
+                  waveAmplitude={4}
+                  waveDuration={4}
+                />
                 <motion.span
                   aria-hidden
                   className="pointer-events-none absolute left-0 -bottom-[0.14em] h-[0.05em] w-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300/0 shadow-[0_0_24px_4px_rgba(52,211,153,0.4)]"
@@ -295,8 +290,8 @@ export function WelcomePreview() {
               variants={fade(0.12)}
               className="text-sm sm:text-base lg:text-lg font-light leading-relaxed max-w-xl text-white/70"
             >
-              Ajudamos-te, passo a passo, a encontrar e conquistar a
-              bolsa que pode mudar a tua vida — com mentoria de quem já fez esse caminho.
+              Ajudamos você, passo a passo, a encontrar e conquistar a
+              bolsa que pode mudar a sua vida — com mentoria de quem já fez esse caminho.
             </motion.p>
 
             <motion.div
@@ -308,7 +303,7 @@ export function WelcomePreview() {
                 onClick={() => navigate("/sign-up")}
                 className="group h-13 sm:h-14 px-8 sm:px-10 text-base font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl shadow-[0_8px_32px_rgba(52,211,153,0.35)] hover:shadow-[0_14px_44px_rgba(52,211,153,0.5)] active:scale-[0.97] transition-all duration-200"
               >
-                Começa agora — é grátis
+                Comece agora — é grátis
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -435,11 +430,11 @@ export function WelcomePreview() {
               Tudo num só lugar
             </span>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
-              <AnimatedLetters text="Cada etapa da tua jornada" className="inline-block" />{" "}
+              <AnimatedLetters text="Cada etapa da sua jornada" className="inline-block" />{" "}
               <AnimatedLetters text="num só lugar" className="inline-block text-emerald-600 dark:text-emerald-400" />
             </h2>
             <p className="text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
-              Do primeiro passo até à conquista da tua vaga — tudo o que precisas, reunido num só lugar.
+              Do primeiro passo até à conquista da sua vaga — tudo o que você precisa, reunido num só lugar.
             </p>
           </motion.div>
 
@@ -493,7 +488,7 @@ export function WelcomePreview() {
                 Oportunidades em Destaque
               </h2>
               <p className="text-gray-400 dark:text-zinc-500 mt-2 text-sm">
-                As bolsas mais relevantes, seleccionadas para o teu perfil.
+                As bolsas mais relevantes, seleccionadas para o seu perfil.
               </p>
             </motion.div>
 
@@ -681,10 +676,10 @@ export function WelcomePreview() {
               <GraduationCap className="h-8 w-8 text-white" />
             </motion.div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-5">
-              <AnimatedLetters text="Começa hoje a tua jornada" className="inline-block" />
+              <AnimatedLetters text="Comece hoje a sua jornada" className="inline-block" />
             </h2>
             <p className="text-emerald-100/75 text-sm sm:text-base max-w-lg mx-auto mb-10 leading-relaxed">
-              Entra para o grupo de estudantes angolanos que já conquistaram
+              Entre para o grupo de estudantes angolanos que já conquistaram
               uma vaga no estrangeiro. Criar conta é grátis e leva menos de dois minutos.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 interface AnimatedLettersProps {
   text: string;
   className?: string;
+  letterClassName?: string;
   delay?: number;
   stagger?: number;
   loop?: boolean;
@@ -15,6 +16,7 @@ const letterEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 export function AnimatedLetters({
   text,
   className,
+  letterClassName,
   delay = 0,
   stagger = 0.04,
   loop = false,
@@ -58,7 +60,7 @@ export function AnimatedLetters({
                   }
                 >
                   <motion.span
-                    className="inline-block"
+                    className={`inline-block ${letterClassName ?? ""}`}
                     style={{ display: "inline-block", transformStyle: "preserve-3d" }}
                     variants={{
                       hidden: { y: "0.8em", opacity: 0, rotateX: -80, transformPerspective: 600 },

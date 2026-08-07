@@ -392,10 +392,10 @@ function SeuFuturoSection() {
         >
           <span className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
             <Target className="h-3.5 w-3.5" />
-            O Teu Futuro
+            O Seu Futuro
           </span>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
-            O teu caminho começa aqui
+            O seu caminho começa aqui
           </h2>
           <p className="text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto">
             Da descoberta à realização — acompanhe cada etapa da sua jornada académica internacional.
