@@ -18,7 +18,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { cursosApi, type Aula } from "@/api/cursos";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import toast from "react-hot-toast";
 
@@ -501,7 +501,7 @@ export function CourseDetailAdmin() {
                   )}
                   {aula.tipo === "PDF" && aula.pdfUrl && (
                     <Button size="sm" variant="outline" onClick={() => {
-                      const url = aula.pdfUrl!.startsWith("/uploads/") ? `${api.defaults.baseURL}${aula.pdfUrl}` : aula.pdfUrl!;
+                      const url = aula.pdfUrl!.startsWith("/uploads/") ? getUploadUrl(aula.pdfUrl) : aula.pdfUrl!;
                       window.open(url, "_blank");
                     }}>
                       <Eye size={14} className="mr-1" />
@@ -556,7 +556,7 @@ export function CourseDetailAdmin() {
               )}
               {previewAula?.tipo === "VIDEO" && previewAula?.videoLocal && (
                 <video
-                  src={`${api.defaults.baseURL}${previewAula.videoLocal}`}
+                  src={getUploadUrl(previewAula.videoLocal)}
                   controls
                   autoPlay
                   className="w-full h-full object-contain"

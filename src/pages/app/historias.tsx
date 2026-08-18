@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { useUser } from "@/api/useGetProfile";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -82,7 +82,7 @@ export function HistoriasPage() {
     }
   };
 
-  const userAvatarSrc = user?.image_path ? `${api.defaults.baseURL}/uploads/${user.image_path}` : "";
+  const userAvatarSrc = user?.image_path ? getUploadUrl(`/uploads/${user.image_path}`) : "";
   const userInitials = user?.nome?.substring(0, 2).toUpperCase() || "U";
 
   const featured = stories[0];

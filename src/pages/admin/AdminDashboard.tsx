@@ -30,6 +30,7 @@ import {
   Globe,
   UserCheck,
   Eye,
+  CalendarClock,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ const menuItems = [
   { label: "Depoimentos", href: "/admin/depoimentos", icon: MessageCircle },
   { label: "Análise Documentos", href: "/admin/analise-documento", icon: FileText },
   { label: "Aulas ao Vivo", href: "/admin/aulas-online", icon: Video },
+  { label: "Atividades", href: "/admin/atividades", icon: CalendarClock },
   { label: "Mapa Global", href: "/admin/mapa-global", icon: Globe },
   { label: "Banners Home", href: "/admin/banners", icon: ImageIcon },
   { label: "Utilizadores", href: "/admin/usuarios", icon: User },

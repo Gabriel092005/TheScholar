@@ -6,8 +6,11 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useUser } from "@/api/useGetProfile";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { NotificationBell } from "@/components/notification-bell";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -34,7 +37,7 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
 
   const userInitials = user?.nome?.substring(0, 2).toUpperCase() || "U";
   const userColor = COLORS[(user?.nome?.length ?? 0) % COLORS.length] || "bg-emerald-500";
-  const userAvatarSrc = user?.image_path ? `${api.defaults.baseURL}/uploads/${user.image_path}` : "";
+  const userAvatarSrc = getUploadUrl(user?.image_path ? `/uploads/${user.image_path}` : "");
 
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
@@ -213,6 +216,68 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
           </div>
         </div>
       </header>
+
+      <Sheet open={sidebarOpen} onOpenChange={(open) => setSidebarOpen?.(open)}>
+        <SheetContent side="left" className="w-72 p-0 bg-white dark:bg-[#111113]">
+          <SheetHeader className="px-5 py-4 border-b border-gray-100 dark:border-white/[0.06]">
+            <SheetTitle className="text-left text-base font-semibold">Menu</SheetTitle>
+          </SheetHeader>
+          <nav className="flex flex-col p-3 gap-0.5">
+            {navItems.map(({ label, href, icon: Icon }) => {
+              const isActive = location.pathname === href;
+              return (
+                <SheetClose asChild key={label}>
+                  <Link
+                    to={href}
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        : "text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                </SheetClose>
+              );
+            })}
+            {user?.role === "ADMIN" && (
+              <>
+                <div className="h-px bg-gray-100 dark:bg-white/[0.06] my-1" />
+                <SheetClose asChild>
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Painel Admin
+                  </Link>
+                </SheetClose>
+              </>
+            )}
+          </nav>
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-white/[0.06]">
+            {user ? (
+              <button
+                onClick={() => { setSidebarOpen?.(false); handleLogout(); }}
+                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Terminar sessão
+              </button>
+            ) : (
+              <SheetClose asChild>
+                <Link
+                  to="/sign-in"
+                  className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors"
+                >
+                  Login
+                </Link>
+              </SheetClose>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

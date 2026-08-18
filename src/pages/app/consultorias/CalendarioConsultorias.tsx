@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import {
   addMonths, eachDayOfInterval, endOfMonth, endOfWeek,
@@ -11,7 +11,7 @@ import { pt } from "date-fns/locale";
 import {
   Calendar, ChevronLeft, ChevronRight, CheckCircle2, XCircle,
   Clock, AlertCircle, Loader2, MessageSquare, CalendarDays, ArrowRight,
-  Plus, GraduationCap,
+  Plus, GraduationCap, Video, Users, CalendarClock, MapPin, Trash2,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,8 +21,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { bolsasApi, type BolsaInscricao } from "@/api/bolsas";
+import { aulasApi, type AulaOnline } from "@/api/aulas";
+import { atividadesApi, type Atividade } from "@/api/atividades";
+import { useUser } from "@/api/useGetProfile";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const ATIVIDADE_TIPOS = [
+  { value: "ATIVIDADE", label: "Atividade" },
+  { value: "PALESTRA", label: "Palestra" },
+  { value: "WORKSHOP", label: "Workshop" },
+  { value: "EVENTO", label: "Evento" },
+];
+
+const ATIVIDADE_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
+  ATIVIDADE: { label: "Atividade", dot: "bg-purple-500", badge: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+  PALESTRA: { label: "Palestra", dot: "bg-purple-500", badge: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+  WORKSHOP: { label: "Workshop", dot: "bg-purple-500", badge: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+  EVENTO: { label: "Evento", dot: "bg-purple-500", badge: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+};
 
 const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string; icon: any }> = {
   APROVADA: {
@@ -53,6 +74,24 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string;
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
+const AULA_STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
+  AGENDADA: {
+    label: "Agendada",
+    dot: "bg-blue-500",
+    badge: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  },
+  AO_VIVO: {
+    label: "Ao Vivo",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  FINALIZADA: {
+    label: "Finalizada",
+    dot: "bg-gray-400",
+    badge: "bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-zinc-400",
+  },
+};
+
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDENTE;
   const Icon = config.icon;
@@ -66,10 +105,15 @@ function StatusBadge({ status }: { status: string }) {
 
 export function CalendarioConsultorias() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+  const isAdmin = user?.role === "ADMIN";
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filterStatus, setFilterStatus] = useState("TODAS");
   const [agendarOpen, setAgendarOpen] = useState(false);
+  const [criarOpen, setCriarOpen] = useState(false);
+  const [form, setForm] = useState({ titulo: "", descricao: "", data: "", hora: "", duracao: "", local: "", tipo: "ATIVIDADE" });
 
   const { data: inscricoes, isLoading } = useQuery({
     queryKey: ["minhas-inscricoes"],
@@ -79,6 +123,46 @@ export function CalendarioConsultorias() {
   const { data: bolsasResponse, isLoading: bolsasLoading } = useQuery({
     queryKey: ["bolsas-consultoria"],
     queryFn: () => bolsasApi.list({ status: "PUBLICADA" }),
+  });
+
+  const { data: aulas } = useQuery({
+    queryKey: ["aulas", "calendario"],
+    queryFn: () => aulasApi.list({ limit: 100 }),
+  });
+
+  const { data: atividades } = useQuery({
+    queryKey: ["atividades"],
+    queryFn: atividadesApi.list,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => {
+      const dataStr = `${form.data}T${form.hora}:00`;
+      return atividadesApi.create({
+        titulo: form.titulo,
+        descricao: form.descricao || undefined,
+        data: dataStr,
+        duracaoMinutos: form.duracao ? Number(form.duracao) : undefined,
+        local: form.local || undefined,
+        tipo: form.tipo,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["atividades"] });
+      toast.success("Atividade criada com sucesso!");
+      setForm({ titulo: "", descricao: "", data: "", hora: "", duracao: "", local: "", tipo: "ATIVIDADE" });
+      setCriarOpen(false);
+    },
+    onError: () => toast.error("Erro ao criar atividade"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => atividadesApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["atividades"] });
+      toast.success("Atividade removida");
+    },
+    onError: () => toast.error("Erro ao remover atividade"),
   });
 
   const bolsasComConsultoria = useMemo(
@@ -119,6 +203,36 @@ export function CalendarioConsultorias() {
     return map;
   }, [filteredConsultorias]);
 
+  const aulasAgendadas = useMemo(
+    () =>
+      (aulas?.data || []).filter((a) =>
+        ["AGENDADA", "AO_VIVO", "FINALIZADA"].includes(a.status)
+      ),
+    [aulas]
+  );
+
+  const aulasPorDia = useMemo(() => {
+    const map = new Map<string, AulaOnline[]>();
+    aulasAgendadas.forEach((aula) => {
+      const key = format(new Date(aula.data), "yyyy-MM-dd");
+      const arr = map.get(key) || [];
+      arr.push(aula);
+      map.set(key, arr);
+    });
+    return map;
+  }, [aulasAgendadas]);
+
+  const atividadesPorDia = useMemo(() => {
+    const map = new Map<string, Atividade[]>();
+    (atividades || []).forEach((atv) => {
+      const key = format(new Date(atv.data), "yyyy-MM-dd");
+      const arr = map.get(key) || [];
+      arr.push(atv);
+      map.set(key, arr);
+    });
+    return map;
+  }, [atividades]);
+
   const selecionadas = useMemo(() => {
     if (!selectedDate) return [];
     const key = format(selectedDate, "yyyy-MM-dd");
@@ -129,12 +243,52 @@ export function CalendarioConsultorias() {
     });
   }, [selectedDate, consultoriasPorDia]);
 
+  const aulasDoDia = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return (aulasPorDia.get(key) || []).slice().sort((a, b) => {
+      const da = new Date(a.data).getTime();
+      const db = new Date(b.data).getTime();
+      return da - db;
+    });
+  }, [selectedDate, aulasPorDia]);
+
+  const atividadesDoDia = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return (atividadesPorDia.get(key) || []).slice().sort((a, b) => {
+      const da = new Date(a.data).getTime();
+      const db = new Date(b.data).getTime();
+      return da - db;
+    });
+  }, [selectedDate, atividadesPorDia]);
+
   const proximas = useMemo(() => {
     const now = new Date();
     return filteredConsultorias
       .filter((i) => new Date(i.dataAgendada!) >= now && i.status === "APROVADA")
       .slice(0, 4);
   }, [filteredConsultorias]);
+
+  const proximasAulas = useMemo(() => {
+    const now = new Date();
+    return aulasAgendadas
+      .filter(
+        (a) =>
+          (a.status === "AGENDADA" || a.status === "AO_VIVO") &&
+          new Date(a.data) >= now
+      )
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 4);
+  }, [aulasAgendadas]);
+
+  const proximasAtividades = useMemo(() => {
+    const now = new Date();
+    return (atividades || [])
+      .filter((a) => new Date(a.data) >= now)
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 4);
+  }, [atividades]);
 
   if (isLoading) {
     return (
@@ -162,21 +316,32 @@ export function CalendarioConsultorias() {
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
             <CalendarDays className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          Calendário de Consultorias
+          Calendário de Atividades
         </h1>
         <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-          Acompanhe as suas consultorias agendadas e o seu estado.
+          Acompanhe as suas consultorias, aulas ao vivo e atividades agendadas.
         </p>
       </motion.div>
 
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <button
-          onClick={() => setAgendarOpen(true)}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 shadow-lg shadow-emerald-600/20 transition-all duration-200"
-        >
-          <Plus className="w-4 h-4" />
-          Agendar Consultoria
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setAgendarOpen(true)}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 shadow-lg shadow-emerald-600/20 transition-all duration-200"
+          >
+            <Plus className="w-4 h-4" />
+            Agendar Consultoria
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setCriarOpen(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 shadow-lg shadow-purple-600/20 transition-all duration-200"
+            >
+              <CalendarClock className="w-4 h-4" />
+              Criar Atividade
+            </button>
+          )}
+        </div>
         <Link
           to="/bolsas"
           className="text-xs font-semibold text-gray-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1"
@@ -231,7 +396,11 @@ export function CalendarioConsultorias() {
             <div className="grid grid-cols-7">
               {days.map((day, index) => {
                 const key = format(day, "yyyy-MM-dd");
-                const doDia = consultoriasPorDia.get(key) || [];
+                const doDiaConsultorias = consultoriasPorDia.get(key) || [];
+                const doDiaAulas = aulasPorDia.get(key) || [];
+                const doDiaAtividades = atividadesPorDia.get(key) || [];
+                const totalDoDia = doDiaConsultorias.length + doDiaAulas.length + doDiaAtividades.length;
+                const aulasUsadas = Math.min(doDiaAulas.length, Math.max(0, 3 - doDiaConsultorias.length));
                 const inMonth = isSameMonth(day, currentMonth);
                 const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
                 const today = isToday(day);
@@ -264,7 +433,7 @@ export function CalendarioConsultorias() {
                     </span>
 
                     <div className="space-y-1">
-                      {doDia.slice(0, 3).map((insc) => {
+                      {doDiaConsultorias.slice(0, 3).map((insc) => {
                         const config = STATUS_CONFIG[insc.status] || STATUS_CONFIG.PENDENTE;
                         return (
                           <div
@@ -281,9 +450,47 @@ export function CalendarioConsultorias() {
                           </div>
                         );
                       })}
-                      {doDia.length > 3 && (
+                      {doDiaAulas
+                        .slice(0, aulasUsadas)
+                        .map((aula) => {
+                          const config = AULA_STATUS_CONFIG[aula.status] || AULA_STATUS_CONFIG.AGENDADA;
+                          return (
+                            <div
+                              key={aula.id}
+                              className={cn(
+                                "flex items-center gap-1.5 rounded-md px-1.5 py-0.5 truncate",
+                                isSelected ? "bg-blue-100/70 dark:bg-blue-500/15" : config.badge
+                              )}
+                            >
+                              <Video className="w-2.5 h-2.5 shrink-0" />
+                              <span className="text-[9px] font-semibold truncate text-inherit">
+                                {aula.titulo?.substring(0, 14) || "Aula ao Vivo"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      {doDiaAtividades
+                        .slice(0, Math.max(0, 3 - doDiaConsultorias.length - aulasUsadas))
+                        .map((atv) => {
+                          const config = ATIVIDADE_CONFIG[atv.tipo || "ATIVIDADE"] || ATIVIDADE_CONFIG.ATIVIDADE;
+                          return (
+                            <div
+                              key={atv.id}
+                              className={cn(
+                                "flex items-center gap-1.5 rounded-md px-1.5 py-0.5 truncate",
+                                isSelected ? "bg-purple-100/70 dark:bg-purple-500/15" : config.badge
+                              )}
+                            >
+                              <CalendarClock className="w-2.5 h-2.5 shrink-0" />
+                              <span className="text-[9px] font-semibold truncate text-inherit">
+                                {atv.titulo?.substring(0, 14) || "Atividade"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      {totalDoDia > 3 && (
                         <span className="text-[9px] font-semibold text-gray-400 dark:text-zinc-600 px-1.5">
-                          +{doDia.length - 3} mais
+                          +{totalDoDia - 3} mais
                         </span>
                       )}
                     </div>
@@ -299,6 +506,14 @@ export function CalendarioConsultorias() {
                   {config.label}
                 </span>
               ))}
+              <span className="flex items-center gap-1.5 text-[10px] font-medium text-gray-500 dark:text-zinc-500">
+                <Video className="w-3 h-3 text-blue-500" />
+                Aula ao Vivo
+              </span>
+              <span className="flex items-center gap-1.5 text-[10px] font-medium text-gray-500 dark:text-zinc-500">
+                <CalendarClock className="w-3 h-3 text-purple-500" />
+                Atividade
+              </span>
             </div>
           </div>
 
@@ -312,7 +527,7 @@ export function CalendarioConsultorias() {
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">
                   {selectedDate
-                    ? `${selecionadas.length} consultoria${selecionadas.length !== 1 ? "s" : ""} neste dia`
+                    ? `${selecionadas.length + aulasDoDia.length + atividadesDoDia.length} atividade${selecionadas.length + aulasDoDia.length + atividadesDoDia.length !== 1 ? "s" : ""} neste dia`
                     : "Selecione um dia no calendário para ver os detalhes."}
                 </p>
               </div>
@@ -329,9 +544,9 @@ export function CalendarioConsultorias() {
               </select>
             </div>
 
-            {selectedDate && selecionadas.length === 0 ? (
+            {selectedDate && selecionadas.length === 0 && aulasDoDia.length === 0 && atividadesDoDia.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-zinc-600 py-6 text-center">
-                Nenhuma consultoria agendada neste dia.
+                Nenhum evento agendado neste dia.
               </p>
             ) : !selectedDate ? (
               <div className="flex flex-col items-center gap-3 py-8">
@@ -381,13 +596,153 @@ export function CalendarioConsultorias() {
                         className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
                         title="Ver bolsa"
                       >
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </motion.div>
+              ))}
+
+              {aulasDoDia.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Video className="w-3.5 h-3.5 text-blue-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                      Aulas ao Vivo
+                    </h3>
+                  </div>
+                  {aulasDoDia.map((aula, i) => {
+                    const config = AULA_STATUS_CONFIG[aula.status] || AULA_STATUS_CONFIG.AGENDADA;
+                    return (
+                      <motion.div
+                        key={aula.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-4 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-white dark:bg-[#111113]"
+                      >
+                        <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <Video className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {aula.titulo}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            {new Date(aula.data).toLocaleString("pt-PT", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {aula.duracao ? ` · ${aula.duracao} min` : ""}
+                          </p>
+                          {aula.host?.nome && (
+                            <p className="text-[11px] text-gray-400 dark:text-zinc-600 mt-0.5 flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {aula.host.nome}
+                            </p>
+                          )}
+                        </div>
+                        <div className="shrink-0 flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full font-semibold",
+                              config.badge
+                            )}
+                          >
+                            {config.label}
+                          </span>
+                          <Link
+                            to={`/aulas/${aula.id}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            title="Ver aula"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </>
+              )}
+
+              {atividadesDoDia.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 pt-2">
+                    <CalendarClock className="w-3.5 h-3.5 text-purple-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                      Atividades
+                    </h3>
+                  </div>
+                  {atividadesDoDia.map((atv, i) => {
+                    const config = ATIVIDADE_CONFIG[atv.tipo || "ATIVIDADE"] || ATIVIDADE_CONFIG.ATIVIDADE;
+                    return (
+                      <motion.div
+                        key={atv.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-4 p-4 rounded-2xl border border-purple-100 dark:border-purple-500/20 bg-white dark:bg-[#111113]"
+                      >
+                        <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center shrink-0">
+                          <CalendarClock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {atv.titulo}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            {new Date(atv.data).toLocaleString("pt-PT", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {atv.duracaoMinutos ? ` · ${atv.duracaoMinutos} min` : ""}
+                          </p>
+                          {atv.local && (
+                            <p className="text-[11px] text-gray-400 dark:text-zinc-600 mt-0.5 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {atv.local}
+                            </p>
+                          )}
+                          {atv.descricao && (
+                            <p className="text-[11px] text-gray-400 dark:text-zinc-600 mt-1 truncate">
+                              {atv.descricao}
+                            </p>
+                          )}
+                        </div>
+                        <div className="shrink-0 flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full font-semibold",
+                              config.badge
+                            )}
+                          >
+                            {config.label}
+                          </span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => deleteMutation.mutate(atv.id)}
+                              disabled={deleteMutation.isPending}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                              title="Remover atividade"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          )}
           </div>
         </div>
 
@@ -417,6 +772,81 @@ export function CalendarioConsultorias() {
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
                           {insc.bolsa?.titulo || "Consultoria"}
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-zinc-500">
+                          {format(dt, "EEEE 'às' HH:mm", { locale: pt })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-5">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Video className="w-4 h-4 text-blue-500" />
+              Próximas Aulas ao Vivo
+            </h2>
+            {proximasAulas.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-zinc-600 py-4 text-center">
+                Sem aulas ao vivo agendadas.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {proximasAulas.map((aula) => {
+                  const dt = new Date(aula.data);
+                  return (
+                    <Link
+                      key={aula.id}
+                      to={`/aulas/${aula.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 dark:border-blue-500/15 bg-blue-50/50 dark:bg-blue-500/[0.06] hover:border-blue-300 dark:hover:border-blue-500/30 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold leading-none">{format(dt, "dd")}</span>
+                        <span className="text-[9px] font-medium leading-tight uppercase">{format(dt, "MMM", { locale: pt })}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                          {aula.titulo}
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-zinc-500">
+                          {format(dt, "EEEE 'às' HH:mm", { locale: pt })}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-5">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <CalendarClock className="w-4 h-4 text-purple-500" />
+              Próximas Atividades
+            </h2>
+            {proximasAtividades.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-zinc-600 py-4 text-center">
+                Sem atividades agendadas.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {proximasAtividades.map((atv) => {
+                  const dt = new Date(atv.data);
+                  return (
+                    <div
+                      key={atv.id}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-purple-100 dark:border-purple-500/15 bg-purple-50/50 dark:bg-purple-500/[0.06]"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold leading-none">{format(dt, "dd")}</span>
+                        <span className="text-[9px] font-medium leading-tight uppercase">{format(dt, "MMM", { locale: pt })}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                          {atv.titulo}
                         </p>
                         <p className="text-[10px] text-gray-500 dark:text-zinc-500">
                           {format(dt, "EEEE 'às' HH:mm", { locale: pt })}
@@ -532,6 +962,137 @@ export function CalendarioConsultorias() {
               </div>
             </ScrollArea>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
+        <DialogContent className="sm:max-w-lg bg-white dark:bg-[#111113] border-gray-100 dark:border-white/[0.08]">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 dark:text-white">
+              Criar Atividade
+            </DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-zinc-400">
+              Agende uma nova atividade que aparecerá no calendário para todos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                Título *
+              </label>
+              <Input
+                value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ex.: Sessão de mentoria sobre bolsas"
+                className="bg-white dark:bg-white/[0.03]"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                Tipo
+              </label>
+              <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+                <SelectTrigger className="bg-white dark:bg-white/[0.03]">
+                  <SelectValue placeholder="Tipo de atividade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ATIVIDADE_TIPOS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                  Data *
+                </label>
+                <Input
+                  type="date"
+                  value={form.data}
+                  onChange={(e) => setForm({ ...form, data: e.target.value })}
+                  className="bg-white dark:bg-white/[0.03]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                  Hora *
+                </label>
+                <Input
+                  type="time"
+                  value={form.hora}
+                  onChange={(e) => setForm({ ...form, hora: e.target.value })}
+                  className="bg-white dark:bg-white/[0.03]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                  Duração (minutos)
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.duracao}
+                  onChange={(e) => setForm({ ...form, duracao: e.target.value })}
+                  placeholder="Ex.: 60"
+                  className="bg-white dark:bg-white/[0.03]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                  Local
+                </label>
+                <Input
+                  value={form.local}
+                  onChange={(e) => setForm({ ...form, local: e.target.value })}
+                  placeholder="Ex.: Sala 2 / Online"
+                  className="bg-white dark:bg-white/[0.03]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 dark:text-zinc-400 mb-1.5 block">
+                Descrição
+              </label>
+              <Textarea
+                value={form.descricao}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                placeholder="Detalhes da atividade..."
+                rows={3}
+                className="bg-white dark:bg-white/[0.03]"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              onClick={() => setCriarOpen(false)}
+              className="h-10 px-4 rounded-xl text-sm font-semibold text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => createMutation.mutate()}
+              disabled={!form.titulo || !form.data || !form.hora || createMutation.isPending}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-600/20 transition-all duration-200"
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CalendarClock className="w-4 h-4" />
+              )}
+              Criar Atividade
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </motion.div>

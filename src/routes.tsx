@@ -15,6 +15,7 @@ import { DepoimentosPage } from './pages/app/depoimentos';
 import { HistoriasPage } from './pages/app/historias';
 import { MinhasAtividadesPage } from './pages/app/minhas-atividades';
 import { CalendarioConsultorias } from './pages/app/consultorias/CalendarioConsultorias';
+import { CalendarioPublico } from './pages/public/CalendarioPublico';
 
 import { ScholarshipApp } from './pages/app/scholarShip/ScholarshipApp';
 import { ScholarshipDetailPage } from './pages/app/scholarShip/scholarShipDetailsPage';
@@ -47,6 +48,7 @@ import { AnaliseDocumentoAdmin } from './pages/admin/analise-documento/AnaliseDo
 import { AulasOnlineAdmin } from './pages/admin/aulas-online/AulasOnlineAdmin';
 import { HomeBannersAdmin } from './pages/admin/banners/HomeBannersAdmin';
 import { MapaGlobalAdmin } from './pages/admin/mapa-global/MapaGlobalAdmin';
+import { AtividadesAdmin } from './pages/admin/atividades/AtividadesAdmin';
 
 
 export const router = createBrowserRouter([
@@ -113,8 +115,15 @@ export const router = createBrowserRouter([
       { path: 'analise-documento', element: <AnaliseDocumentoAdmin /> },
       { path: 'aulas-online', element: <AulasOnlineAdmin /> },
       { path: 'banners', element: <HomeBannersAdmin /> },
+      { path: 'atividades', element: <AtividadesAdmin /> },
       { path: 'mapa-global', element: <MapaGlobalAdmin /> },
     ],
+  },
+
+  // ── Calendário Público ──────────────────────────────
+  {
+    path: '/calendario',
+    element: <CalendarioPublico />,
   },
 
   // ── Magic Link Verify ────────────────────────────────────

@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cursosApi, type CursoPagamento } from "@/api/cursos";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
 import {
@@ -126,7 +126,7 @@ export function PagamentosAdmin() {
     const nome = pagamento.usuario?.nome || "Usuário";
     const email = pagamento.usuario?.email || "";
     const userImage = pagamento.usuario?.image_path
-      ? `${api.defaults.baseURL}/${pagamento.usuario.image_path}`
+      ? getUploadUrl(`/${pagamento.usuario.image_path}`)
       : "";
 
     return (
@@ -185,7 +185,7 @@ export function PagamentosAdmin() {
               <p className="text-sm font-medium text-gray-900 dark:text-white">{pagamento.curso?.titulo || "-"}</p>
               {pagamento.comprovativo && (
                 <a
-                  href={pagamento.comprovativo.startsWith("http") ? pagamento.comprovativo : `${api.defaults.baseURL}/${pagamento.comprovativo}`}
+                  href={pagamento.comprovativo.startsWith("http") ? pagamento.comprovativo : getUploadUrl(`/${pagamento.comprovativo}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 hover:underline mt-3"
@@ -304,7 +304,7 @@ export function PagamentosAdmin() {
                       const nome = pagamento.usuario?.nome || "Usuário";
                       const email = pagamento.usuario?.email || "";
                       const userImage = pagamento.usuario?.image_path
-                        ? `${api.defaults.baseURL}/${pagamento.usuario.image_path}`
+                        ? getUploadUrl(`/${pagamento.usuario.image_path}`)
                         : "";
                       return (
                         <tr
@@ -444,7 +444,7 @@ export function PagamentosAdmin() {
                   const nome = pagamento.usuario?.nome || "Usuário";
                   const email = pagamento.usuario?.email || "";
                   const userImage = pagamento.usuario?.image_path
-                    ? `${api.defaults.baseURL}/${pagamento.usuario.image_path}`
+                    ? getUploadUrl(`/${pagamento.usuario.image_path}`)
                     : "";
                   return (
                     <div key={pagamento.id} className="p-5 space-y-4">

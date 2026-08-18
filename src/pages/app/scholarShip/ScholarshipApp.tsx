@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ScholarshipCard } from "./ScholarshipCard";
 import { bolsasApi, type Bolsa } from "@/api/bolsas";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 
 import { Search, SlidersHorizontal, GraduationCap, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -63,7 +63,7 @@ function mapBolsaToScholarship(bolsa: Bolsa) {
     tags: getTags(bolsa),
     bgImage: bolsa.imagemUrl
       || (bolsa.imagemBg
-        ? (bolsa.imagemBg.startsWith("http") ? bolsa.imagemBg : `${api.defaults.baseURL}/uploads/${bolsa.imagemBg}`)
+        ? (bolsa.imagemBg.startsWith("http") ? bolsa.imagemBg : getUploadUrl(`/uploads/${bolsa.imagemBg}`))
         : undefined),
     inscriptionPrice: bolsa.precoInscricao ?? undefined,
     consultoriaPrice: bolsa.precoConsultoria ?? undefined,

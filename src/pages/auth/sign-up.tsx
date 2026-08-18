@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Mail, Lock, ArrowRight, Loader2, ShieldCheck, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { signUp } from "@/api/auth";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { toast } from "sonner";
@@ -74,6 +74,7 @@ export function SignUp() {
   const [password,       setPassword]       = useState("");
 
   const navigate    = useNavigate();
+  const queryClient = useQueryClient();
   const strength    = getPasswordStrength(password);
 
   // ── Shake helper ─────────────────────────────────────
@@ -91,6 +92,7 @@ export function SignUp() {
 
     onSuccess: async (response) => {
       Cookies.set("token", response.token, { expires: 7, path: "/" });
+      await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
 
       setIsSuccess(true);
       toast.success("Conta criada com sucesso!", {
@@ -101,7 +103,7 @@ export function SignUp() {
       navigate("/", { replace: true });
     },
 
-    onError: (error: any) => {
+    onError: async (error: any) => {
       const isNetworkError =
         error?.code === "ERR_NETWORK" || error?.message?.includes("Network");
 
@@ -115,6 +117,7 @@ export function SignUp() {
             exp: Math.floor(Date.now() / 1000) + 86400,
           }));
         Cookies.set("token", demoToken, { expires: 7, path: "/" });
+        await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         toast.success("Conta criada (modo demonstração)!", {
           description: `Bem-vindo, ${nome.split(" ")[0]}!`,
         });

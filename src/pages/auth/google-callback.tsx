@@ -17,40 +17,48 @@ export function GoogleCallback() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const error = searchParams.get("error");
-    const reason = searchParams.get("reason");
+    (async () => {
+      const token = searchParams.get("token");
+      const error = searchParams.get("error");
+      const reason = searchParams.get("reason");
 
-    if (error || !token) {
-      navigate(`/sign-in?error=${error || "google_auth_failed"}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`, {
-        replace: true,
-      });
-      return;
-    }
-
-    try {
-      const decoded = jwtDecode<MyTokenPayload>(token);
-      const isExpired = Date.now() >= decoded.exp * 1000;
-      if (isExpired) {
-        navigate("/sign-in?error=token_expired", { replace: true });
+      if (error || !token) {
+        navigate(`/sign-in?error=${error || "google_auth_failed"}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`, {
+          replace: true,
+        });
         return;
       }
 
-      Cookies.set("token", token, { expires: 7, path: "/" });
+      try {
+        const decoded = jwtDecode<MyTokenPayload>(token);
+        const isExpired = Date.now() >= decoded.exp * 1000;
+        if (isExpired) {
+          navigate("/sign-in?error=token_expired", { replace: true });
+          return;
+        }
 
-      // Pré-carrega o perfil do utilizador para evitar ecrã de loading
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+        Cookies.set("token", token, { expires: 7, path: "/" });
 
-      if (decoded.role === "ADMIN") {
-        navigate("/admin", { replace: true });
-      } else if (decoded.role === "GESTOR") {
-        navigate("/gestor/dashboard", { replace: true });
-      } else {
-        navigate("/", { replace: true });
+        await queryClient.prefetchQuery({
+          queryKey: ["user-profile"],
+          queryFn: async () => {
+            const { getProfile } = await import("@/api/auth");
+            return await getProfile();
+          },
+          staleTime: 1000 * 60 * 5,
+        });
+
+        if (decoded.role === "ADMIN") {
+          navigate("/admin", { replace: true });
+        } else if (decoded.role === "GESTOR") {
+          navigate("/gestor/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      } catch {
+        navigate("/sign-in?error=invalid_token", { replace: true });
       }
-    } catch {
-      navigate("/sign-in?error=invalid_token", { replace: true });
-    }
+    })();
   }, [searchParams, navigate, queryClient]);
 
   return (

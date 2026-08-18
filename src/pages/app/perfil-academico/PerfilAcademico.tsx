@@ -12,7 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/api/useGetProfile";
 import { perfilAcademicoApi } from "@/api/perfil-academico";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 function toArray(val: any): string[] {
@@ -274,7 +274,7 @@ export function PerfilAcademicoPage() {
       setQualquerContinente(perfil.qualquerContinente || "");
       setDocumentos(perfil.documentos ? perfil.documentos.split(",") : []);
       if (perfil.fotoUrl) {
-        setFotoPreview(`${api.defaults.baseURL}/uploads/${perfil.fotoUrl}`);
+        setFotoPreview(getUploadUrl(`/uploads/${perfil.fotoUrl}`));
       }
     }
   }, [perfil]);

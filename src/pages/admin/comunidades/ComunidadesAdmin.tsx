@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listarComunidades, criarComunidade, entrarComunidade, editarComunidade } from "@/api/comunidades";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 function formatDate(dateStr: string) {
@@ -351,7 +351,7 @@ export function ComunidadesAdmin() {
                 <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] shrink-0">
                   {editarImagem ? (
                     <>
-                      <img src={`${api.defaults.baseURL}${editarImagem}`} alt="Perfil" className="w-full h-full object-cover" />
+                      <img src={getUploadUrl(editarImagem)} alt="Perfil" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => setEditarImagem(null)}
@@ -403,7 +403,7 @@ export function ComunidadesAdmin() {
               <div className="relative w-full h-32 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08]">
                 {editarCapa ? (
                   <>
-                    <img src={`${api.defaults.baseURL}${editarCapa}`} alt="Capa" className="w-full h-full object-cover" />
+                    <img src={getUploadUrl(editarCapa)} alt="Capa" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setEditarCapa(null)}

@@ -51,7 +51,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
       <SidebarLink icon={<Globe size={18} />} to="/proficiencia" active={isActive('/proficiencia')} label="Proficiência EN" expanded={isExpanded} />
       <SidebarLink icon={<GraduationCap size={18} />} to="/cursos" active={isActive('/cursos')} label="Preparação Pessoal" expanded={isExpanded} />
       <SidebarLink icon={<History size={18} />} to="/minhas-atividades" active={isActive('/minhas-atividades')} label="Minhas Atividades" expanded={isExpanded} />
-      <SidebarLink icon={<CalendarDays size={18} />} to="/minhas-consultorias" active={isActive('/minhas-consultorias')} label="Calendário" expanded={isExpanded} />
+      <SidebarLink icon={<CalendarDays size={18} />} to="/minhas-consultorias" active={isActive('/minhas-consultorias')} label="Agendamentos" expanded={isExpanded} />
       <SidebarLink icon={<Video size={18} />} to="/aulas" active={isActive('/aulas')} label="Aulas ao Vivo" expanded={isExpanded} />
       <SidebarLink icon={<Users size={18} />} to="/comunidades" active={isActive('/comunidades')} label="Comunidades" expanded={isExpanded} />
       <SidebarLink icon={<BookHeart size={18} />} to="/historias" active={isActive('/historias')} label="Histórias" expanded={isExpanded} />

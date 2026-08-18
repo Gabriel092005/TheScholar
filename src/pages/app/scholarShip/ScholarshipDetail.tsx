@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { bolsasApi } from "@/api/bolsas";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import type { Scholarship } from "./types";
@@ -173,7 +173,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
   const bgImageUrl = scholarship.bgImage
     ? scholarship.bgImage.startsWith("http")
       ? scholarship.bgImage
-      : `${api.defaults.baseURL}/uploads/${scholarship.bgImage.replace(/^\//, "")}`
+      : getUploadUrl(`/uploads/${scholarship.bgImage.replace(/^\//, "")}`)
     : null;
 
   return (

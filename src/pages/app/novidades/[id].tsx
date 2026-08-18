@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { novidadesApi } from "@/api/novidades";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { ExpressIcon, MulticaixaIcon, PayPalIcon } from "@/components/payment-icons";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
@@ -97,7 +97,7 @@ export function NovidadeDetailPage() {
   const coverUrl = novidade.image_url
     ? novidade.image_url
     : novidade.image_path
-    ? `${api.defaults.baseURL}/uploads/${novidade.image_path}`
+    ? getUploadUrl(`/uploads/${novidade.image_path}`)
     : null;
 
   const galleryMedia = (novidade.anexos || []).filter(
@@ -131,7 +131,7 @@ export function NovidadeDetailPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {galleryMedia.map((media) => {
-              const mediaUrl = `${api.defaults.baseURL}/uploads/${media.file}`;
+              const mediaUrl = getUploadUrl(`/uploads/${media.file}`);
               return (
                 <div
                   key={media.id}

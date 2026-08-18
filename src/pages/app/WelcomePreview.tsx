@@ -5,13 +5,14 @@ import {
   Award, GraduationCap, ArrowRight,
   Users, BookOpenText, Target,
   UserCheck, Video, FileText,
-  Quote, Play, MapPin,
+  Quote, Play, MapPin, CalendarDays,
+  Link,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bolsasApi } from "@/api/bolsas";
 import { depoimentosApi, type Depoimento } from "@/api/depoimentos";
 import { homeBannersApi } from "@/api/home-banners";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/header";
 import { AnimatedLetters } from "@/components/AnimatedLetters";
@@ -183,7 +184,7 @@ export function WelcomePreview() {
     ? bannersList.map((b) =>
         b.imageUrl.startsWith("http")
           ? b.imageUrl
-          : `${api.defaults.baseURL}${b.imageUrl.startsWith("/") ? "" : "/uploads/"}${b.imageUrl}`
+          : getUploadUrl(b.imageUrl)
       )
     : fallbackImages;
 
@@ -249,16 +250,9 @@ export function WelcomePreview() {
             animate="visible"
             className="max-w-4xl"
           >
-            <motion.div variants={fade(0)} className="flex items-center gap-3 mb-6">
-              <span className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-[11px] font-bold tracking-widest uppercase text-emerald-300 backdrop-blur-md overflow-hidden">
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-emerald-300/25 to-transparent animate-pulse" />
-                Feito para estudantes angolanos
-              </span>
-            </motion.div>
-
             <motion.h1
               variants={fade(0.05)}
-              className="text-[2rem] leading-[1.05] sm:text-[2.8rem] md:text-[3.6rem] lg:text-[4.6rem] font-black tracking-tight text-white max-w-5xl"
+              className="text-[1.3rem] leading-[1.05] sm:text-[1.8rem] md:text-[2.2rem] lg:text-[2.8rem] font-black tracking-tight text-white max-w-5xl"
             >
               <AnimatedLetters text="Comece hoje a sua preparação e conquiste várias bolsas de estudo, intercâmbios, estágios e oportunidades no exterior —" className="inline-block" delay={0.1} />{" "}
               <AnimatedLetters text="tudo começa com a" className="inline-block" delay={0.1} />{" "}
@@ -287,7 +281,7 @@ export function WelcomePreview() {
 
             <motion.p
               variants={fade(0.12)}
-              className="text-sm sm:text-base lg:text-lg font-light leading-relaxed max-w-xl text-white/70"
+              className="text-[11px] sm:text-xs lg:text-sm font-light leading-relaxed max-w-xl text-white/70"
             >
               Ajudamos você, passo a passo, a encontrar e conquistar a
               bolsa que pode mudar a sua vida — com mentoria de quem já fez esse caminho.
@@ -300,21 +294,32 @@ export function WelcomePreview() {
               <Button
                 size="lg"
                 onClick={() => navigate("/sign-up")}
-                className="group h-13 sm:h-14 px-8 sm:px-10 text-base font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl shadow-[0_8px_32px_rgba(52,211,153,0.35)] hover:shadow-[0_14px_44px_rgba(52,211,153,0.5)] active:scale-[0.97] transition-all duration-200"
+                className="group h-13 sm:h-14 px-8 sm:px-10 text-sm font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl shadow-[0_8px_32px_rgba(52,211,153,0.35)] hover:shadow-[0_14px_44px_rgba(52,211,153,0.5)] active:scale-[0.97] transition-all duration-200"
               >
                 Comece agora — é grátis
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-                className="h-13 sm:h-14 px-8 sm:px-10 text-base font-semibold border-2 border-white/25 text-white bg-white/5 hover:bg-white/15 hover:border-white/40 backdrop-blur-sm rounded-2xl active:scale-[0.97] transition-all duration-200"
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Ver como funciona
-              </Button>
-            </motion.div>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                  className="h-13 sm:h-14 px-8 sm:px-10 text-sm font-semibold border-2 border-white/25 text-white bg-white/5 hover:bg-white/15 hover:border-white/40 backdrop-blur-sm rounded-2xl active:scale-[0.97] transition-all duration-200"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Ver como funciona
+                </Button>
+              </motion.div>
+
+              <motion.div variants={fade(0.2)} className="mt-8">
+                <Link
+                  to="/calendario"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-white/60 hover:text-emerald-300 transition-colors"
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Ver calendário de atividades
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </motion.div>
 
             <motion.div
               variants={fade(0.22)}
@@ -326,7 +331,7 @@ export function WelcomePreview() {
                 { value: "92%", label: "Taxa de aprovação" },
               ].map((s) => (
                 <div key={s.label} className="group">
-                  <p className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  <p className="text-sm sm:text-base font-black tracking-tight text-white">
                     {s.value}
                   </p>
                   <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1 group-hover:text-emerald-300 transition-colors">{s.label}</p>
@@ -397,7 +402,7 @@ export function WelcomePreview() {
                   <stat.icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </motion.div>
                 <div>
-                  <p className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
+                  <p className="text-base sm:text-lg font-black tracking-tight text-gray-900 dark:text-white leading-none">
                     <DynamicCounter to={stat.value} />
                     {stat.suffix}
                   </p>
@@ -428,11 +433,11 @@ export function WelcomePreview() {
               <Target className="h-3.5 w-3.5" />
               Tudo num só lugar
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
               <AnimatedLetters text="Cada etapa da sua jornada" className="inline-block" />{" "}
               <AnimatedLetters text="num só lugar" className="inline-block text-emerald-600 dark:text-emerald-400" />
             </h2>
-            <p className="text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
+            <p className="text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto text-xs sm:text-sm">
               Do primeiro passo até à conquista da sua vaga — tudo o que você precisa, reunido num só lugar.
             </p>
           </motion.div>
@@ -456,10 +461,10 @@ export function WelcomePreview() {
                 >
                   <f.icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </motion.div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-base mb-2">
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">
                   {f.title}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
+                <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
                   {f.desc}
                 </p>
               </motion.div>
@@ -483,7 +488,7 @@ export function WelcomePreview() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
                 Seleção do mês
               </p>
-              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
                 Oportunidades em Destaque
               </h2>
               <p className="text-gray-400 dark:text-zinc-500 mt-2 text-sm">
@@ -590,7 +595,7 @@ export function WelcomePreview() {
               <span className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-[11px] font-semibold tracking-widest uppercase text-emerald-600 dark:text-emerald-400">
                 Depoimentos
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
                 <AnimatedLetters text="O que dizem os nossos alunos" className="inline-block" />
               </h2>
               <p className="text-gray-400 dark:text-zinc-500 mt-3 text-sm max-w-xl mx-auto">
@@ -609,7 +614,7 @@ export function WelcomePreview() {
                   className="relative p-8 sm:p-10 rounded-3xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] shadow-xl shadow-gray-100/60 dark:shadow-none"
                 >
                   <Quote className="absolute top-5 right-6 h-10 w-10 text-emerald-200 dark:text-emerald-800/30" />
-                  <p className="text-gray-700 dark:text-zinc-200 text-base sm:text-lg leading-relaxed italic">
+                  <p className="text-gray-700 dark:text-zinc-200 text-xs sm:text-sm leading-relaxed italic">
                     &ldquo;{currentTestimonial.texto}&rdquo;
                   </p>
                   <div className="mt-6 flex items-center gap-3">
@@ -674,10 +679,10 @@ export function WelcomePreview() {
             >
               <GraduationCap className="h-8 w-8 text-white" />
             </motion.div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-5">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white mb-5">
               <AnimatedLetters text="Comece hoje a sua jornada" className="inline-block" />
             </h2>
-            <p className="text-emerald-100/75 text-sm sm:text-base max-w-lg mx-auto mb-10 leading-relaxed">
+            <p className="text-emerald-100/75 text-[11px] sm:text-xs max-w-lg mx-auto mb-10 leading-relaxed">
               Entre para o grupo de estudantes angolanos que já conquistaram
               uma vaga no estrangeiro. Criar conta é grátis e leva menos de dois minutos.
             </p>
@@ -685,7 +690,7 @@ export function WelcomePreview() {
               <Button
                 size="lg"
                 onClick={() => navigate("/sign-up")}
-                className="h-14 px-10 sm:px-12 text-base font-bold bg-white text-emerald-700 hover:bg-emerald-50 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_44px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
+                className="h-14 px-10 sm:px-12 text-sm font-bold bg-white text-emerald-700 hover:bg-emerald-50 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_44px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
               >
                 Criar a minha conta
                 <ArrowRight className="ml-2.5 h-5 w-5" />
@@ -694,7 +699,7 @@ export function WelcomePreview() {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate("/sign-in")}
-                className="h-14 px-10 sm:px-12 text-base font-semibold border-2 border-white/30 text-white bg-white/5 hover:bg-white/15 hover:border-white/50 rounded-2xl active:scale-[0.97] transition-all duration-200"
+                className="h-14 px-10 sm:px-12 text-sm font-semibold border-2 border-white/30 text-white bg-white/5 hover:bg-white/15 hover:border-white/50 rounded-2xl active:scale-[0.97] transition-all duration-200"
               >
                 Entrar na minha conta
               </Button>
@@ -729,6 +734,11 @@ export function WelcomePreview() {
                     <span className="text-xs text-gray-500 hover:text-emerald-400 transition-colors cursor-pointer">{item}</span>
                   </li>
                 ))}
+                <li>
+                  <Link to="/calendario" className="text-xs text-gray-500 hover:text-emerald-400 transition-colors">
+                    Agendamentos
+                  </Link>
+                </li>
               </ul>
             </div>
 

@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { verifyMagicLink } from "@/api/auth";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import Cookies from "js-cookie";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function VerifyMagicLink() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
@@ -19,8 +21,9 @@ export function VerifyMagicLink() {
     }
 
     verifyMagicLink(token)
-      .then((res) => {
+      .then(async (res) => {
         Cookies.set("token", res.token, { expires: 7, path: "/" });
+        await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         setStatus("success");
         setMessage("Login efetuado com sucesso!");
         setTimeout(() => {

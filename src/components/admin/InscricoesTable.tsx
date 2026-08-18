@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { bolsasApi, type BolsaInscricao } from "@/api/bolsas";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
 
@@ -66,7 +66,7 @@ const statusConfig: Record<string, { label: string; classes: string }> = {
 function makeUrl(path?: string) {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `${api.defaults.baseURL}${path.startsWith("/") ? "" : "/"}${path}`;
+  return getUploadUrl(path);
 }
 
 function formatAgendamento(inscricao: BolsaInscricao) {
@@ -316,7 +316,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                       const nome = inscricao.usuario?.nome || inscricao.nome || "—";
                       const email = inscricao.usuario?.email || inscricao.email || "—";
                       const userImage = inscricao.usuario?.image_path
-                        ? `${api.defaults.baseURL}/${inscricao.usuario.image_path}`
+                        ? getUploadUrl(`/${inscricao.usuario.image_path}`)
                         : "";
                       const status = statusConfig[inscricao.status] || statusConfig.PENDENTE;
 
@@ -370,7 +370,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                   const nome = inscricao.usuario?.nome || inscricao.nome || "—";
                   const email = inscricao.usuario?.email || inscricao.email || "—";
                   const userImage = inscricao.usuario?.image_path
-                    ? `${api.defaults.baseURL}/${inscricao.usuario.image_path}`
+                    ? getUploadUrl(`/${inscricao.usuario.image_path}`)
                     : "";
                   const status = statusConfig[inscricao.status] || statusConfig.PENDENTE;
 
@@ -548,7 +548,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                   <AvatarImage
                     src={
                       avaliarModal?.inscricao.usuario?.image_path
-                        ? `${api.defaults.baseURL}/${avaliarModal?.inscricao.usuario.image_path}`
+                        ? getUploadUrl(`/${avaliarModal?.inscricao.usuario.image_path}`)
                         : ""
                     }
                     className="object-cover"

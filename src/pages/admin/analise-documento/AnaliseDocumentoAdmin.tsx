@@ -12,7 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { analiseDocumentoApi, type AnaliseDocumento } from "@/api/analise-documento";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
@@ -153,7 +153,7 @@ export function AnaliseDocumentoAdmin() {
                       <div className="flex items-center justify-end gap-1">
                         {a.arquivoUrl && (
                           <a
-                            href={`${api.defaults.baseURL}/uploads/${a.arquivoUrl}`}
+                            href={getUploadUrl(`/uploads/${a.arquivoUrl}`)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
@@ -203,7 +203,7 @@ export function AnaliseDocumentoAdmin() {
                               )}
                               {selected?.arquivoUrl && (
                                 <a
-                                  href={`${api.defaults.baseURL}/uploads/${selected.arquivoUrl}`}
+                                  href={getUploadUrl(`/uploads/${selected.arquivoUrl}`)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 hover:underline"

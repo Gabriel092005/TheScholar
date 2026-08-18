@@ -8,7 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { novidadesApi } from "@/api/novidades";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -103,7 +103,7 @@ export function NovidadesPage() {
               const coverUrl = novidade.image_url
                 ? novidade.image_url
                 : novidade.image_path
-                ? `${api.defaults.baseURL}/uploads/${novidade.image_path}`
+                ? getUploadUrl(`/uploads/${novidade.image_path}`)
                 : null;
 
               const isLiked = liked.has(novidade.id);

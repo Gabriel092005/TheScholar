@@ -22,7 +22,7 @@ import { depoimentosApi, type Depoimento } from "@/api/depoimentos";
 import { mapaGlobalApi, type MapaGlobalItem } from "@/api/mapa-global";
 import { MapaGlobal } from "@/components/mapa-global/MapaGlobal";
 import { novidadesApi } from "@/api/novidades";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import img1 from "@/assets/WhatsApp Image 2026-04-06 512.26.31.jpeg";
@@ -177,7 +177,7 @@ function NovidadesHomeSection() {
                   className="group relative flex flex-col rounded-2xl cursor-pointer border border-amber-200/50 dark:border-amber-500/20 bg-white dark:bg-[#111113] hover:shadow-lg hover:shadow-amber-200/30 dark:hover:shadow-amber-950/30 transition-all duration-300 overflow-hidden"
                 >
                   {(() => {
-                      const imgUrl = novidade.image_url || (novidade.image_path ? `${api.defaults.baseURL}/uploads/${novidade.image_path}` : null);
+                      const imgUrl = novidade.image_url || (novidade.image_path ? getUploadUrl(`/uploads/${novidade.image_path}`) : null);
                       return imgUrl ? (
                         <div className="h-36 overflow-hidden">
                           <img src={imgUrl} alt={novidade.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -228,7 +228,7 @@ function NovidadesHomeSection() {
                 className="group relative flex flex-col rounded-2xl cursor-pointer border border-gray-100 bg-white shadow-sm hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-50 dark:bg-white/[0.02] dark:border-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-none transition-all duration-300 overflow-hidden"
               >
                 {(() => {
-                      const imgUrl = novidade.image_url || (novidade.image_path ? `${api.defaults.baseURL}/uploads/${novidade.image_path}` : null);
+                      const imgUrl = novidade.image_url || (novidade.image_path ? getUploadUrl(`/uploads/${novidade.image_path}`) : null);
                       return imgUrl ? (
                         <div className="h-36 overflow-hidden">
                           <img src={imgUrl} alt={novidade.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -458,7 +458,7 @@ export function HomePage() {
     ? bannersList.map((b) =>
         b.imageUrl.startsWith("http")
           ? b.imageUrl
-          : `${api.defaults.baseURL}${b.imageUrl.startsWith("/") ? "" : "/uploads/"}${b.imageUrl}`
+          : getUploadUrl(b.imageUrl)
       )
     : fallbackImages;
 

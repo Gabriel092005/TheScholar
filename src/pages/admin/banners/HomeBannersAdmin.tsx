@@ -5,7 +5,7 @@ import { Trash2, Loader2, Image as ImageIcon, Plus, GripVertical } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { homeBannersApi } from "@/api/home-banners";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useUser } from "@/api/useGetProfile";
 
@@ -55,7 +55,7 @@ export function HomeBannersAdmin() {
 
   function imageSrc(url: string) {
     if (url.startsWith("http")) return url;
-    return `${api.defaults.baseURL}/uploads/${url}`;
+    return getUploadUrl(`/uploads/${url}`);
   }
 
   if (isLoading) {

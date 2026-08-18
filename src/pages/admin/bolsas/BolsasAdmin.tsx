@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { bolsasApi, type Bolsa } from "@/api/bolsas";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 interface ScholarshipForm {
@@ -509,7 +509,7 @@ export function BolsasAdmin() {
                       {(imagemBgPreview || (form.imagemBg && !imagemBgFile)) && (
                         <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-white/[0.08]">
                           <img
-                            src={imagemBgPreview || (form.imagemBg.startsWith("http") ? form.imagemBg : `${api.defaults.baseURL}/uploads/${form.imagemBg}`)}
+                            src={imagemBgPreview || (form.imagemBg.startsWith("http") ? form.imagemBg : getUploadUrl(`/uploads/${form.imagemBg}`))}
                             alt="Preview"
                             className="w-full h-32 object-cover"
                           />

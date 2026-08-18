@@ -30,7 +30,7 @@ import {
   type CommunityQuestion,
 } from "@/api/comunidades";
 import { socket, connectSocket } from "@/lib/socket";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -408,7 +408,7 @@ export function ComunidadeChatPage() {
       {comunidade.capa && (
         <div className="h-32 sm:h-44 shrink-0 overflow-hidden bg-gray-100 dark:bg-white/[0.04]">
           <img
-            src={`${api.defaults.baseURL}${comunidade.capa}`}
+            src={getUploadUrl(comunidade.capa)}
             alt="Capa da comunidade"
             className="w-full h-full object-cover"
           />
@@ -426,7 +426,7 @@ export function ComunidadeChatPage() {
           <div className="flex items-center gap-3 min-w-0">
             {comunidade.imagem ? (
               <img
-                src={`${api.defaults.baseURL}${comunidade.imagem}`}
+                src={getUploadUrl(comunidade.imagem)}
                 alt={comunidade.nome}
                 className="w-9 h-9 rounded-xl object-cover shrink-0"
               />
@@ -606,7 +606,7 @@ export function ComunidadeChatPage() {
                   const isOwn = msg.usuarioId === user?.id;
                   const msgColor = COLORS[msg.usuario.nome.length % COLORS.length];
                   const avatarSrc = msg.usuario.image_path
-                    ? `${api.defaults.baseURL}/uploads/${msg.usuario.image_path}`
+                    ? getUploadUrl(`/uploads/${msg.usuario.image_path}`)
                     : "";
                   return (
                     <motion.div
@@ -885,7 +885,7 @@ export function ComunidadeChatPage() {
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors group"
                 >
                   <Avatar className="w-9 h-9 border-2 border-white dark:border-[#111113] shrink-0">
-                    <AvatarImage src={u.image_path ? `${api.defaults.baseURL}/uploads/${u.image_path}` : ""} className="object-cover" />
+                    <AvatarImage src={u.image_path ? getUploadUrl(`/uploads/${u.image_path}`) : ""} className="object-cover" />
                     <AvatarFallback className="bg-emerald-500 text-white text-[9px] font-bold">
                       {u.nome.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -935,7 +935,7 @@ export function ComunidadeChatPage() {
                 return (
                 <div key={m.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl group">
                   <Avatar className="w-9 h-9 border-2 border-white dark:border-[#111113] shrink-0">
-                    <AvatarImage src={m.usuario.image_path ? `${api.defaults.baseURL}/uploads/${m.usuario.image_path}` : ""} className="object-cover" />
+                    <AvatarImage src={m.usuario.image_path ? getUploadUrl(`/uploads/${m.usuario.image_path}`) : ""} className="object-cover" />
                     <AvatarFallback className={cn(COLORS[m.usuario.nome.length % COLORS.length], "text-white text-[9px] font-bold")}>
                       {m.usuario.nome.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -985,7 +985,7 @@ export function ComunidadeChatPage() {
               solicitacoes.map((s) => (
                 <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl group">
                   <Avatar className="w-9 h-9 border-2 border-white dark:border-[#111113] shrink-0">
-                    <AvatarImage src={s.usuario.image_path ? `${api.defaults.baseURL}/uploads/${s.usuario.image_path}` : ""} className="object-cover" />
+                    <AvatarImage src={s.usuario.image_path ? getUploadUrl(`/uploads/${s.usuario.image_path}`) : ""} className="object-cover" />
                     <AvatarFallback className={cn(COLORS[s.usuario.nome.length % COLORS.length], "text-white text-[9px] font-bold")}>
                       {s.usuario.nome.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -1026,7 +1026,7 @@ export function ComunidadeChatPage() {
 
 function MessageBubble({ message, isOwn }: { message: CommunityMessage; isOwn: boolean }) {
   const fileUrl = message.anexoUrl
-    ? `${api.defaults.baseURL}${message.anexoUrl}`
+    ? getUploadUrl(message.anexoUrl)
     : null;
 
   const hasContent = message.content && message.content !== "";
@@ -1265,7 +1265,7 @@ function DuvidasPanel({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="w-8 h-8 border-2 border-white dark:border-[#111113] shrink-0">
-                        <AvatarImage src={duvida.usuario.image_path ? `${api.defaults.baseURL}/uploads/${duvida.usuario.image_path}` : ""} />
+                        <AvatarImage src={duvida.usuario.image_path ? getUploadUrl(`/uploads/${duvida.usuario.image_path}`) : ""} />
                         <AvatarFallback className="bg-emerald-500 text-white text-[9px] font-bold">
                           {duvida.usuario.nome.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -1303,7 +1303,7 @@ function DuvidasPanel({
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0">
                               <Avatar className="w-6 h-6 border border-white dark:border-[#111113] shrink-0">
-                                <AvatarImage src={resposta.usuario.image_path ? `${api.defaults.baseURL}/uploads/${resposta.usuario.image_path}` : ""} />
+                                <AvatarImage src={resposta.usuario.image_path ? getUploadUrl(`/uploads/${resposta.usuario.image_path}`) : ""} />
                                 <AvatarFallback className="bg-gray-400 text-white text-[7px] font-bold">
                                   {resposta.usuario.nome.substring(0, 2).toUpperCase()}
                                 </AvatarFallback>

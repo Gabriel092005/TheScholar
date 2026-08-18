@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Dialog } from "@/components/ui/dialog";
 import { EditProfileDialog } from "./update-profile";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 
 const COLORS = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-orange-500", "bg-teal-500"];
 
@@ -39,7 +39,7 @@ export function AccountMenu() {
   const { initials, color, src } = profile ? {
     initials: profile.nome?.substring(0, 2).toUpperCase() || "U",
     color: COLORS[profile.nome?.length % COLORS.length] || "bg-emerald-500",
-    src: profile.image_path ? `${api.defaults.baseURL}/uploads/${profile.image_path}` : ""
+    src: profile.image_path ? getUploadUrl(`/uploads/${profile.image_path}`) : ""
   } : { initials: "U", color: "bg-emerald-500", src: "" };
 
   return (

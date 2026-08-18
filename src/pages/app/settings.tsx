@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { EditProfileDialog } from "@/components/update-profile";
 import { useUser } from "@/api/useGetProfile";
 import { useTheme } from "@/components/theme/theme-provider";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import { cn } from "@/lib/utils";
 
 
@@ -105,7 +105,7 @@ export function SettingsPage() {
   }, []);
 
   const userColor = user?.nome ? COLORS[user.nome.length % COLORS.length] : "bg-emerald-500";
-  const avatarSrc = user?.image_path ? `${api.defaults.baseURL}/uploads/${user.image_path}` : "";
+  const avatarSrc = user?.image_path ? getUploadUrl(`/uploads/${user.image_path}`) : "";
 
   const changePasswordMutation = useMutation({
     mutationFn: async () => {

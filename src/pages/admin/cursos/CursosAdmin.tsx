@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { cursosApi, type Curso } from "@/api/cursos";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 interface CursoForm {
@@ -451,7 +451,7 @@ export function CursosAdmin() {
                       <div className="shrink-0 w-28 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center">
                         {form.capaUrl.startsWith("http") || form.capaUrl.startsWith("/uploads") ? (
                           <img
-                            src={form.capaUrl.startsWith("/uploads") ? `${api.defaults.baseURL}${form.capaUrl}` : form.capaUrl}
+                            src={getUploadUrl(form.capaUrl)}
                             alt="Capa"
                             className="w-full h-full object-cover"
                             onError={(e) => {

@@ -9,7 +9,7 @@ import { perfilAcademicoApi } from "@/api/perfil-academico";
 import { ScholarshipCard } from "@/pages/app/scholarShip/ScholarshipCard";
 import { format, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import {
   Send, Loader2, ArrowLeft, Briefcase, AlertTriangle,
   RefreshCw, X, GraduationCap, User,
@@ -91,7 +91,7 @@ function mapBolsaToScholarship(bolsa: Bolsa): Scholarship {
     tags: getTags(bolsa),
     bgImage: bolsa.imagemUrl
       || (bolsa.imagemBg
-        ? (bolsa.imagemBg.startsWith("http") ? bolsa.imagemBg : `${api.defaults.baseURL}/uploads/${bolsa.imagemBg}`)
+        ? (bolsa.imagemBg.startsWith("http") ? bolsa.imagemBg : getUploadUrl(`/uploads/${bolsa.imagemBg}`))
         : undefined),
     inscriptionPrice: bolsa.precoInscricao ?? undefined,
     consultoriaPrice: bolsa.precoConsultoria ?? undefined,
@@ -159,7 +159,7 @@ function SelecaoBolsas({ onSelect }: { onSelect: (id: string) => void }) {
               Entrevista de Bolsas
             </div>
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.15] mb-2 tracking-tight">
-              Ernesto <span className="text-emerald-200">Bartolomeu</span>
+              Ernesto
             </h1>
             <p className="text-emerald-100/80 text-xs md:text-sm max-w-lg leading-relaxed">
               Selecione uma bolsa para iniciar a entrevista de avaliação com o nosso entrevistador oficial.
@@ -381,7 +381,7 @@ function EntrevistaChat({
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Ernesto Bartolomeu</p>
+                  <p className="text-sm font-semibold text-white">Ernesto</p>
                   <p className="text-[10px] text-white/60">Entrevistador Oficial</p>
                 </div>
               </div>
@@ -417,7 +417,7 @@ function EntrevistaChat({
                   <User className="w-10 h-10 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Entrevista com Ernesto Bartolomeu
+                  Entrevista com Ernesto
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-zinc-500 max-w-md mb-8">
                   Será submetido a uma entrevista formal de avaliação para a bolsa

@@ -17,7 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { updateProfile, updateProfilePhoto } from "@/api/get-profile";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 
 const profileSchema = z.object({
   nome: z.string().min(3, "Nome muito curto (mínimo 3 caracteres)"),
@@ -47,7 +47,7 @@ export function EditProfileDialog({ user, onSuccess }: EditProfileDialogProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const userColor = COLORS[user.nome?.length % COLORS.length] || "bg-emerald-500";
-  const avatarSrc = preview || (user.image_path ? `${api.defaults.baseURL}/uploads/${user.image_path}` : "");
+  const avatarSrc = preview || (user.image_path ? getUploadUrl(`/uploads/${user.image_path}`) : "");
 
   const {
     register,

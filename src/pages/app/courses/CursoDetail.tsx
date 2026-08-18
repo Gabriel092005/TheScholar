@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cursosApi, type Curso, type Aula } from "@/api/cursos";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 const STORAGE_KEY = "scholar-lessons-completed";
@@ -56,7 +56,7 @@ export function CursoDetail() {
 
   const resolveMediaUrl = (url?: string) => {
     if (!url) return "";
-    if (url.startsWith("/uploads/")) return `${api.defaults.baseURL}${url}`;
+    if (url.startsWith("/uploads/")) return getUploadUrl(url);
     return url;
   };
 

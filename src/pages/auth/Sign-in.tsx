@@ -10,6 +10,7 @@ import Cookies from "js-cookie";
 import { signIn, requestMagicLink } from "@/api/auth";
 import { toast } from "sonner";
 import { env } from "@/env";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MyTokenPayload {
   role: "ADMIN" | "GESTOR" | "USUARIO";
@@ -71,6 +72,7 @@ export function SignIn() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -168,6 +170,7 @@ export function SignIn() {
     try {
       const response = await signIn(email.trim().toLowerCase(), password);
       Cookies.set("token", response.token, { expires: 7, path: "/" });
+      await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
 
       if (rememberEmail) {
         localStorage.setItem("rememberedEmail", email.trim().toLowerCase());
@@ -193,6 +196,7 @@ export function SignIn() {
         });
         const demoToken = "demo." + btoa(JSON.stringify({ role: "USUARIO", sub: email, exp: Math.floor(Date.now() / 1000) + 86400 }));
         Cookies.set("token", demoToken, { expires: 7, path: "/" });
+        await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         navigate("/");
       } else {
         const message = error?.response?.data?.message || "E-mail ou senha incorretos";

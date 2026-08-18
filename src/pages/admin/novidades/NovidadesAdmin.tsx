@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { novidadesApi, type Novidade } from "@/api/novidades";
-import { api } from "@/lib/axios";
+import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
 interface NovidadeForm {
@@ -313,7 +313,7 @@ export function NovidadesAdmin() {
                       <Label className="text-xs text-gray-500 dark:text-zinc-500 mb-2 block">Ficheiros existentes</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {existingAnexos.map((anexo) => {
-                          const url = `${api.defaults.baseURL}/uploads/${anexo.file}`;
+                          const url = getUploadUrl(`/uploads/${anexo.file}`);
                           const isImage = anexo.type === "image";
                           const isCover = coverAnexoPath === anexo.file;
                           return (
