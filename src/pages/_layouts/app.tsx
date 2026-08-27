@@ -35,7 +35,7 @@ export function AppLayoutAdmin() {
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        <Sidebar mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+        <Sidebar />
         <ScrollArea className="flex-1">
           <Outlet />
         </ScrollArea>

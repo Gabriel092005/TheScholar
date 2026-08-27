@@ -82,7 +82,8 @@ export function CursosApp() {
               <span className="text-emerald-200">seu futuro</span>
             </h1>
             <p className="text-emerald-100/80 text-xs md:text-sm max-w-lg leading-relaxed">
-              Programas de preparação pessoal para exames de admissão. Aprenda com os
+              Programas de preparação pessoal para bolsas de estudos, intercâmbios,
+              estágios, trabalhos, viagens e outras oportunidades. Aprenda com os
               melhores mentores e conquiste a sua vaga.
             </p>
           </motion.div>

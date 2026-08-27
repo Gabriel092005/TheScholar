@@ -3,6 +3,7 @@ import logo from '@/assets/logo.jpeg'
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Award, Home, Sun, Moon, GraduationCap, LogOut, ChevronDown, Users, MessageCircle, Shield, BookHeart,
+  Settings, History, CalendarDays, Video, FileText, BookOpen, Newspaper, UserCheck, Globe,
 } from "lucide-react";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useUser } from "@/api/useGetProfile";
@@ -20,12 +21,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const COLORS = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-orange-500", "bg-teal-500"];
 
 const navItems = [
-  { label: "Home",        href: "/",           icon: Home },
-  { label: "Comunidades", href: "/comunidades", icon: Users },
-  { label: "Bolsas de Estudos",      href: "/bolsas",     icon: Award },
-  { label: "Preparação Pessoal",      href: "/cursos",     icon: GraduationCap },
-  { label: "Histórias",   href: "/historias",   icon: BookHeart },
-  { label: "Depoimentos", href: "/depoimentos", icon: MessageCircle },
+  { label: "Home",                  href: "/",                    icon: Home },
+  { label: "Bolsas de Estudos",     href: "/bolsas",              icon: Award },
+  { label: "Entrevista IA",         href: "/entrevista",          icon: UserCheck },
+  { label: "Proficiência EN",       href: "/proficiencia",        icon: Globe },
+  { label: "Preparação Pessoal",    href: "/cursos",              icon: GraduationCap },
+  { label: "Minhas Atividades",     href: "/minhas-atividades",   icon: History },
+  { label: "Agendamentos",          href: "/minhas-consultorias", icon: CalendarDays },
+  { label: "Aulas ao Vivo",         href: "/aulas",               icon: Video },
+  { label: "Comunidades",           href: "/comunidades",         icon: Users },
+  { label: "Histórias",             href: "/historias",           icon: BookHeart },
+  { label: "Depoimentos",           href: "/depoimentos",         icon: MessageCircle },
+  { label: "Análise de Documentos", href: "/analise-documento",   icon: FileText },
+  { label: "Perfil Académico",      href: "/perfil-academico",    icon: BookOpen },
+  { label: "Destaques",             href: "/novidades",           icon: Newspaper },
+  { label: "Configurações",         href: "/settings",            icon: Settings },
 ];
 
 export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean; setSidebarOpen?: (v: boolean) => void }) {
@@ -66,9 +76,9 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
                   <Menu className="h-5 w-5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 mt-2 p-2 rounded-xl border border-gray-100 dark:border-white/[0.06] dark:bg-[#111113]">
+              <DropdownMenuContent align="start" className="w-56 max-h-[80vh] overflow-y-auto mt-2 p-2 rounded-xl border border-gray-100 dark:border-white/[0.06] dark:bg-[#111113]">
                 {navItems.map(({ label, href, icon: Icon }) => {
-                  const isActive = location.pathname === href;
+                  const isActive = location.pathname === href || location.pathname.startsWith(href + "/");
                   return (
                     <DropdownMenuItem key={label} asChild>
                       <Link
@@ -222,9 +232,9 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
           <SheetHeader className="px-5 py-4 border-b border-gray-100 dark:border-white/[0.06]">
             <SheetTitle className="text-left text-base font-semibold">Menu</SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col p-3 gap-0.5">
+          <nav className="flex flex-col p-3 gap-0.5 overflow-y-auto pb-24 max-h-[calc(100vh-64px)]">
             {navItems.map(({ label, href, icon: Icon }) => {
-              const isActive = location.pathname === href;
+              const isActive = location.pathname === href || location.pathname.startsWith(href + "/");
               return (
                 <SheetClose asChild key={label}>
                   <Link

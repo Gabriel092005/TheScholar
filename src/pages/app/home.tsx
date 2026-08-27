@@ -494,7 +494,7 @@ export function HomePage() {
             className={`absolute inset-y-0 left-0 right-0 lg:right-[10px] bg-cover bg-center transition-opacity duration-1000 ${
               i === slideIndex ? "opacity-100" : "opacity-0"
             }`}
-            style={{ backgroundImage: `url(${src})` }}
+            style={{ backgroundImage: `url("${src}")` }}
             aria-hidden="true"
           />
         ))}
