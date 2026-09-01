@@ -39,14 +39,7 @@ export function GoogleCallback() {
 
         Cookies.set("token", token, { expires: 7, path: "/" });
 
-        await queryClient.prefetchQuery({
-          queryKey: ["user-profile"],
-          queryFn: async () => {
-            const { getProfile } = await import("@/api/auth");
-            return await getProfile();
-          },
-          staleTime: 1000 * 60 * 5,
-        });
+        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
 
         if (decoded.role === "ADMIN") {
           navigate("/admin", { replace: true });

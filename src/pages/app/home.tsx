@@ -458,7 +458,7 @@ export function HomePage() {
     ? bannersList.map((b) =>
         b.imageUrl.startsWith("http")
           ? b.imageUrl
-          : getUploadUrl(b.imageUrl)
+          : getUploadUrl(`/uploads/${b.imageUrl}`)
       )
     : fallbackImages;
 
