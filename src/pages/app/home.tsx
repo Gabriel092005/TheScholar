@@ -463,6 +463,15 @@ export function HomePage() {
     : fallbackImages;
 
   useEffect(() => {
+    momentsImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [momentsImages]);
+
+  useEffect(() => {
+    if (momentsImages.length === 0) return;
+    setSlideIndex((prev) => (prev >= momentsImages.length ? 0 : prev));
     const timer = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % momentsImages.length);
     }, 5000);
