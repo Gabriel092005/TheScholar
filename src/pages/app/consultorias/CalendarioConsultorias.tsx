@@ -13,6 +13,7 @@ import {
   Clock, AlertCircle, Loader2, MessageSquare, CalendarDays, ArrowRight,
   Plus, GraduationCap, Video, Users, CalendarClock, MapPin, Trash2,
 } from "lucide-react";
+import { UserPageHeader } from "@/components/user-ui";
 import {
   Dialog,
   DialogContent,
@@ -307,21 +308,11 @@ export function CalendarioConsultorias() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl"
     >
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
-            <CalendarDays className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          Calendário de Atividades
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-          Acompanhe as suas consultorias, aulas ao vivo e atividades agendadas.
-        </p>
-      </motion.div>
+      <UserPageHeader
+        icon={CalendarDays}
+        title="Calendário de Atividades"
+        description="Acompanhe as suas consultorias, aulas ao vivo e atividades agendadas."
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex flex-wrap items-center gap-3">
@@ -1076,7 +1067,7 @@ export function CalendarioConsultorias() {
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={() => setCriarOpen(false)}
-              className="h-10 px-4 rounded-xl text-sm font-semibold text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
+              className="h-10 px-4 rounded-xl text-sm font-semibold text-gray-500 dark:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
             >
               Cancelar
             </button>

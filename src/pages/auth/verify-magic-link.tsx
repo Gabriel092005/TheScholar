@@ -28,7 +28,7 @@ export function VerifyMagicLink() {
         setMessage("Login efetuado com sucesso!");
         setTimeout(() => {
           if (res.user.role === "ADMIN") navigate("/admin", { replace: true });
-          else if (res.user.role === "GESTOR") navigate("/gestor/dashboard", { replace: true });
+          else if (res.user.role === "GESTOR") navigate("/gestor/estatisticas", { replace: true });
           else navigate("/", { replace: true });
         }, 1500);
       })

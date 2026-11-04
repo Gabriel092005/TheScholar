@@ -7,8 +7,9 @@ import { ScholarshipCard } from "./ScholarshipCard";
 import { bolsasApi, type Bolsa } from "@/api/bolsas";
 import { api, getUploadUrl } from "@/lib/axios";
 
-import { Search, SlidersHorizontal, GraduationCap, AlertTriangle, RefreshCw, X } from "lucide-react";
+import { Award, Search, GraduationCap, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { UserPageHeader } from "@/components/user-ui";
 import { useState } from "react";
 
 
@@ -84,8 +85,9 @@ export function ScholarshipApp() {
   const [search, setSearch] = useState("");
 
   const { data: response, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["bolsas"],
-    queryFn: () => bolsasApi.list({ status: "PUBLICADA" }),
+    // Chave própria: outras páginas pedem ["bolsas"] sem este filtro.
+    queryKey: ["bolsas", "catalogo"],
+    queryFn: () => bolsasApi.list({ status: "PUBLICADA", ocultarMinhas: true }),
     retry: 2,
   });
 
@@ -103,66 +105,37 @@ export function ScholarshipApp() {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-white dark:bg-[#111113]"
     >
-      {/* ─── Hero ─── */}
-      <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 dark:from-[#0a1a14] dark:via-[#0d2420] dark:to-[#0a0a0a]">
-        <div className="relative container mx-auto px-6 py-8 md:py-10 max-w-6xl">
-          <motion.div {...fadeUp(0)} className="max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-emerald-100 text-[9px] font-medium mb-3">
-              Plataforma de Bolsas
-            </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.15] mb-2 tracking-tight">
-              Oportunidades <span className="text-emerald-200">de Bolsas</span>
-            </h1>
-            <p className="text-emerald-100/80 text-xs md:text-sm max-w-lg leading-relaxed">
-              Descubra bolsas de estudo nacionais e internacionais adaptadas ao seu perfil académico.
-            </p>
-          </motion.div>
-
-          <div className="flex items-end justify-between mt-4 gap-4">
-            <motion.div {...fadeUp(0.1)} className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-200/60" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Pesquisar bolsas..."
-                  className="h-9 pl-9 pr-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-emerald-200/50 focus-visible:ring-emerald-400/50 focus-visible:border-emerald-400/50 text-xs"
-                />
-              </div>
-            </motion.div>
-            <motion.div {...fadeUp(0.2)} className="flex items-center gap-2 text-emerald-100/70 text-[11px] shrink-0">
-              <GraduationCap className="h-3 w-3" />
-              <span className="font-semibold text-white">{scholarships.length}</span>
-              <span>oportunidades</span>
-            </motion.div>
-          </div>
-        </div>
-
-        <div className="h-12 bg-gradient-to-t from-white dark:from-[#111113] to-transparent" />
-      </div>
-
       {/* ─── Content ─── */}
-      <section className="container mx-auto px-6 py-12 max-w-6xl">
-        <div className="flex items-center justify-between mb-8">
-          <p className="text-sm text-gray-500 dark:text-zinc-500">
-            {search ? (
-              <>{scholarships.length} resultado{scholarships.length !== 1 ? "s" : ""} para "<span className="font-semibold text-gray-900 dark:text-white">{search}</span>"</>
-            ) : (
-              <><span className="font-semibold text-gray-900 dark:text-white">{scholarships.length}</span> oportunidades encontradas</>
-            )}
+      <section className="container mx-auto px-6 py-8 sm:py-10 max-w-6xl">
+        <UserPageHeader
+          icon={Award}
+          title="Bolsas de Estudos"
+          description="Encontre oportunidades de estudo em Angola e no estrangeiro."
+        />
+        <div className="flex flex-col gap-3 mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-zinc-500" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar bolsas..."
+              className="h-10 pl-9 pr-3 rounded-xl text-sm"
+            />
+          </div>
+          <p className="text-sm text-gray-500 dark:text-zinc-400 shrink-0">
+            <span className="font-semibold text-gray-900 dark:text-white">{scholarships.length}</span>{" "}
+            {search
+              ? `resultado${scholarships.length !== 1 ? "s" : ""}`
+              : `oportunidade${scholarships.length !== 1 ? "s" : ""}`}
           </p>
-          <button className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-semibold hover:text-emerald-500 transition-colors">
-            <SlidersHorizontal className="h-4 w-4" />
-            Filtros
-          </button>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-gray-100 dark:bg-white/[0.04] h-48 rounded-t-2xl" />
-                <div className="p-5 space-y-3 bg-white dark:bg-[#111113] border border-gray-100 dark:border-white/[0.06] border-t-0 rounded-b-2xl">
+                <div className="bg-gray-100 dark:bg-white/[0.04] h-28 rounded-t-2xl" />
+                <div className="p-4 space-y-3 bg-white dark:bg-[#111113] border border-gray-100 dark:border-white/[0.06] border-t-0 rounded-b-2xl">
                   <div className="h-4 bg-gray-100 dark:bg-white/[0.06] rounded w-3/4" />
                   <div className="h-3 bg-gray-100 dark:bg-white/[0.06] rounded w-1/2" />
                   <div className="flex gap-4">
@@ -219,7 +192,7 @@ export function ScholarshipApp() {
             )}
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {scholarships.map((scholarship, i) => (
               <ScholarshipCard
                 key={scholarship.id}

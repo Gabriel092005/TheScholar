@@ -27,42 +27,40 @@ function getNivelLabel(nivel?: string): string {
   return map[nivel] || nivel;
 }
 
-function formatCurrency(valor: number, _moeda?: string): string {
+function formatCurrency(valor: number, moeda?: string): string {
   if (!valor || valor <= 0) return "";
-  return `AOA ${valor.toLocaleString()}`;
+  return `${moeda || "AOA"} ${valor.toLocaleString("pt-PT")}`;
+}
+
+/** Os requisitos são guardados como uma linha por requisito. */
+function parseRequisitos(requisitos?: string): string[] {
+  if (!requisitos) return [];
+  return requisitos.split(/\r?\n/).map((r) => r.trim()).filter(Boolean);
 }
 
 function mapBolsaToScholarship(bolsa: Bolsa) {
-  const benefits = [];
-  if (bolsa.valor > 0) {
-    benefits.push(formatCurrency(bolsa.valor, bolsa.moeda));
-  }
-  if (bolsa.modalidade) {
-    benefits.push(bolsa.modalidade);
-  }
-  if (bolsa.pais) {
-    benefits.push(bolsa.pais);
-  }
-  if (bolsa.idioma) {
-    benefits.push(`Idioma: ${bolsa.idioma}`);
-  }
+  const dataPrazo = bolsa.prazo || bolsa.datasImportantes?.prazo || bolsa.datasImportantes?.fechamento;
 
   return {
     id: bolsa.id,
     title: bolsa.titulo,
-    university: bolsa.instituicao || "Não especificada",
+    university: bolsa.instituicao || "",
     country: bolsa.pais || "",
     flag: "",
-    deadline: formataData(bolsa.prazo) || formataData(bolsa.datasImportantes?.prazo) || "",
+    deadline: formataData(dataPrazo),
+    deadlineISO: dataPrazo,
+    valor: formatCurrency(bolsa.valor, bolsa.moeda),
+    modalidade: bolsa.modalidade,
+    idioma: bolsa.idioma,
     level: getNivelLabel(bolsa.nivel),
     area: bolsa.categoria || "",
     slots: bolsa.numeroVagas || 0,
     description: bolsa.descricao || "",
-    requirements: bolsa.requisitos ? [bolsa.requisitos] : [],
-    benefits: benefits.length ? benefits : ["Consultar/edital"],
+    requirements: parseRequisitos(bolsa.requisitos),
+    benefits: [],
     tags: bolsa.tags || [],
     linkAplicar: bolsa.linkAplicar,
-    bgImage: bolsa.imagemBg,
+    bgImage: bolsa.imagemUrl || bolsa.imagemBg,
     inscriptionPrice: bolsa.precoInscricao ?? undefined,
     consultoriaPrice: bolsa.precoConsultoria ?? undefined,
     mentoriaPrice: bolsa.precoMentoria ?? undefined,

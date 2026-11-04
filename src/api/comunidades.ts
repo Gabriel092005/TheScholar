@@ -61,8 +61,9 @@ export async function criarComunidade(payload: { nome: string; descricao?: strin
   return data;
 }
 
-export async function entrarComunidade(id: string): Promise<void> {
-  await api.post(`/comunidades/${id}/entrar`);
+export async function entrarComunidade(id: string): Promise<string> {
+  const { data } = await api.post<{ message: string }>(`/comunidades/${id}/entrar`);
+  return data.message;
 }
 
 export async function sairComunidade(id: string): Promise<void> {

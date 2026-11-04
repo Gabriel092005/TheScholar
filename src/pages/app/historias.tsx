@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Quote, Loader2, Send, BookHeart, ArrowRight } from "lucide-react";
+import { Quote, Loader2, Send, BookHeart } from "lucide-react";
+import { CardAccent, RatingStars, Reveal, UserPageHeader, iconTile, userCard } from "@/components/user-ui";
 import { motion } from "framer-motion";
 import { depoimentosApi, type Depoimento } from "@/api/depoimentos";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ function Stars({ count, interactive, onChange }: { count: number; interactive?: 
           ))}
         </select>
       ) : (
-        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{count}/5</span>
+        <RatingStars count={count} />
       )}
     </div>
   );
@@ -90,54 +91,19 @@ export function HistoriasPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#111113]">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 dark:from-[#0a1a14] dark:via-[#0d1f18] dark:to-[#0a1512]">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-emerald-300 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-300 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/80 text-xs font-medium mb-6">
-              Histórias de Alunos
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-white mb-4">
-              Histórias que{" "}
-              <span className="text-emerald-300">inspiram</span>
-            </h1>
-            <p className="text-emerald-100/80 text-lg sm:text-xl max-w-2xl mx-auto mb-8">
-              Conheça as trajetórias de estudantes angolanos que transformaram os seus sonhos em realidade.
-            </p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <Button
-                size="lg"
-                onClick={() => setShowForm(!showForm)}
-                className="bg-white text-emerald-900 hover:bg-emerald-50 font-semibold gap-2 rounded-xl"
-              >
-                <Send className="h-4 w-4" />
-                {showForm ? "Cancelar" : "Compartilhar a minha história"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  const el = document.getElementById("historias-lista");
-                  el?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="border-white/20 text-white hover:bg-white/10 gap-2 rounded-xl"
-              >
-                Ver histórias
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
+        <UserPageHeader
+          icon={BookHeart}
+          title="Histórias"
+          description="Conheça as trajetórias de estudantes angolanos que transformaram os seus sonhos em realidade."
+          action={
+            <Button onClick={() => setShowForm(!showForm)} className="gap-2 rounded-xl">
+              <Send className="h-4 w-4" />
+              {showForm ? "Cancelar" : "Partilhar a minha história"}
+            </Button>
+          }
+        />
+      </div>
 
       {/* Submit form */}
       {showForm && (
@@ -215,7 +181,7 @@ export function HistoriasPage() {
       )}
 
       {/* Stories list */}
-      <section id="historias-lista" className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <section id="historias-lista" className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
@@ -270,32 +236,31 @@ export function HistoriasPage() {
             {remaining.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {remaining.map((story, i) => (
-                  <motion.div
-                    key={story.id}
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="group relative p-6 rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06] hover:border-emerald-200 dark:hover:border-emerald-800/30 hover:shadow-lg dark:hover:shadow-emerald-900/5 transition-all duration-300"
-                  >
-                    <Quote className="absolute top-4 right-4 h-6 w-6 text-emerald-200 dark:text-emerald-800/30 group-hover:text-emerald-300 dark:group-hover:text-emerald-700/50 transition-colors" />
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm shrink-0">
-                        {story.nome.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                  <Reveal key={story.id} index={i}>
+                    <div className={`${userCard} flex h-full flex-col p-6`}>
+                      <CardAccent />
+                      <Quote className="absolute top-4 right-4 h-6 w-6 text-emerald-200 dark:text-emerald-800/40 transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-300" />
+                      <div className="flex items-center gap-3 mb-4 pr-8">
+                        <div className={`${iconTile} text-sm font-bold`}>
+                          {story.nome.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                            {story.nome}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
+                            {story.curso}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                          {story.nome}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-zinc-500 truncate">
-                          {story.curso}
-                        </p>
+                      <p className="text-gray-600 dark:text-zinc-300 text-sm leading-relaxed mb-4 line-clamp-4">
+                        &ldquo;{story.texto}&rdquo;
+                      </p>
+                      <div className="mt-auto">
+                        <Stars count={story.rating} />
                       </div>
                     </div>
-                    <p className="text-gray-600 dark:text-zinc-300 text-sm leading-relaxed mb-3 italic line-clamp-4">
-                      &ldquo;{story.texto}&rdquo;
-                    </p>
-                    <Stars count={story.rating} />
-                  </motion.div>
+                  </Reveal>
                 ))}
               </div>
             )}

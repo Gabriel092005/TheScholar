@@ -7,6 +7,8 @@ export interface User {
   email: string;
   role: "ADMIN" | "GESTOR" | "USUARIO";
   image_path: string | null;
+  bio?: string | null;
+  paisMentoria?: string | null;
   estado_conta: "ACTIVA" | "INACTIVA" | string;
   created_at: string;
   last_active_at: string;
@@ -100,6 +102,7 @@ export async function getProfileDemo(): Promise<User> {
       email: payload.sub || "usuario@demo.com",
       role: (payload.role as "ADMIN" | "GESTOR" | "USUARIO") || "USUARIO",
       image_path: null,
+      bio: null,
       estado_conta: "ACTIVA",
       created_at: new Date().toISOString(),
       last_active_at: new Date().toISOString(),

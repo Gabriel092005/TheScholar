@@ -6,6 +6,7 @@ import {
   Video, Plus, Calendar, Clock, Users,
   Loader2, X, Play,
 } from "lucide-react";
+import { CardAccent, LiveDot, Reveal, UserPageHeader, cardTitle, iconTile, userCard } from "@/components/user-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -37,7 +38,7 @@ function formataHora(data?: string): string {
 
 const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   AGENDADA: { label: "Agendada", class: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400" },
-  AO_VIVO: { label: "Ao Vivo", class: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 animate-pulse" },
+  AO_VIVO: { label: "Ao Vivo", class: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400" },
   FINALIZADA: { label: "Finalizada", class: "bg-gray-50 text-gray-500 dark:bg-white/[0.06] dark:text-zinc-400" },
   CANCELADA: { label: "Cancelada", class: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" },
 };
@@ -66,24 +67,24 @@ function AulaCard({ aula, isHost }: { aula: AulaOnline; isHost: boolean }) {
   const podeEntrar = isLive || (isUpcoming && jaPassou);
 
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-5 active:scale-[0.98] transition-all">
+    <div className={`${userCard} flex h-full flex-col p-5`}>
+      <CardAccent />
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-            isLive ? "bg-green-500" : "bg-gray-100 dark:bg-white/[0.06]"
-          }`}>
-            <Video className={`h-5 w-5 ${isLive ? "text-white" : "text-gray-400"}`} />
+          <div className={isLive ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-500 text-white shadow-lg shadow-green-500/30" : iconTile}>
+            <Video className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            <h3 className={`${cardTitle} text-sm truncate`}>
               {aula.titulo}
             </h3>
-            <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+            <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
               {aula.host.nome}
             </p>
           </div>
         </div>
-        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${statusCfg.class}`}>
+        <span className={`inline-flex shrink-0 items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-lg ${statusCfg.class}`}>
+          {isLive && <LiveDot />}
           {statusCfg.label}
         </span>
       </div>
@@ -94,7 +95,7 @@ function AulaCard({ aula, isHost }: { aula: AulaOnline; isHost: boolean }) {
         </p>
       )}
 
-      <div className="flex items-center gap-4 text-[11px] text-gray-400 dark:text-zinc-500 mb-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-zinc-400 mb-4">
         <span className="flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
           {formataData(aula.data)}
@@ -114,7 +115,7 @@ function AulaCard({ aula, isHost }: { aula: AulaOnline; isHost: boolean }) {
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="mt-auto flex gap-2">
         {(isLive || podeEntrar) && (
           <Button
             size="sm"
@@ -215,7 +216,7 @@ function CreateAulaDialog({ open, onClose }: { open: boolean; onClose: () => voi
                 className="rounded-xl dark:text-white placeholder:dark:text-zinc-500"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1 block">Data</label>
                 <Input
@@ -279,6 +280,7 @@ function CreateAulaDialog({ open, onClose }: { open: boolean; onClose: () => voi
 
 export function AulasOnlinePage() {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [criarOpen, setCriarOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -297,29 +299,33 @@ export function AulasOnlinePage() {
   );
 
   function podeCriar() {
-    return user?.role === "ADMIN";
+    return user?.role === "ADMIN" || user?.role === "GESTOR";
+  }
+
+  function abrirCriacao() {
+    // O mentor cria aulas no seu painel, onde só vê as suas bolsas.
+    if (user?.role === "GESTOR") navigate("/gestor/aulas");
+    else setCriarOpen(true);
   }
 
   return (
-    <div className="pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-[#111113] border-b border-gray-100 dark:border-white/[0.06] px-5 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Aulas ao Vivo</h1>
-            <p className="text-xs text-gray-400 dark:text-zinc-500">Aulas ao vivo com videochamada</p>
-          </div>
-          {podeCriar() && (
+    <div className="container mx-auto max-w-5xl px-4 sm:px-6 pt-8 sm:pt-10 pb-20">
+      <UserPageHeader
+        icon={Video}
+        title="Aulas ao Vivo"
+        description="Participe em aulas ao vivo por videochamada."
+        action={
+          podeCriar() && (
             <Button
-              onClick={() => setCriarOpen(true)}
+              onClick={abrirCriacao}
               className="h-10 px-4 text-xs font-bold rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/20"
             >
               <Plus className="h-4 w-4 mr-1" />
               Criar
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
@@ -336,16 +342,18 @@ export function AulasOnlinePage() {
           </p>
         </div>
       ) : (
-        <div className="px-5 space-y-6 pt-5">
+        <div className="space-y-8">
           {aoVivo.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <LiveDot />
                 Ao Vivo
               </h2>
-              <div className="space-y-3">
-                {aoVivo.map((aula) => (
-                  <AulaCard key={aula.id} aula={aula} isHost={aula.hostId === user?.id} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {aoVivo.map((aula, i) => (
+                  <Reveal key={aula.id} index={i}>
+                    <AulaCard aula={aula} isHost={aula.hostId === user?.id} />
+                  </Reveal>
                 ))}
               </div>
             </section>
@@ -353,10 +361,12 @@ export function AulasOnlinePage() {
 
           {agendadas.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Próximas Aulas</h2>
-              <div className="space-y-3">
-                {agendadas.map((aula) => (
-                  <AulaCard key={aula.id} aula={aula} isHost={aula.hostId === user?.id} />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Próximas Aulas</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {agendadas.map((aula, i) => (
+                  <Reveal key={aula.id} index={i}>
+                    <AulaCard aula={aula} isHost={aula.hostId === user?.id} />
+                  </Reveal>
                 ))}
               </div>
             </section>
@@ -364,10 +374,12 @@ export function AulasOnlinePage() {
 
           {passadas.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Anteriores</h2>
-              <div className="space-y-3">
-                {passadas.map((aula) => (
-                  <AulaCard key={aula.id} aula={aula} isHost={aula.hostId === user?.id} />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Anteriores</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {passadas.map((aula, i) => (
+                  <Reveal key={aula.id} index={i}>
+                    <AulaCard aula={aula} isHost={aula.hostId === user?.id} />
+                  </Reveal>
                 ))}
               </div>
             </section>

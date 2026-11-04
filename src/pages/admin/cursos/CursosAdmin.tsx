@@ -17,29 +17,31 @@ import {
 import { cursosApi, type Curso } from "@/api/cursos";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { api, getUploadUrl } from "@/lib/axios";
-import toast from "react-hot-toast";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
+import {
+  CursoBolsaSelect, SEM_BOLSA, bolsaIdDoCampo, campoDaBolsaId, erroNoCampoDoCurso,
+} from "@/components/curso-bolsa-select";
+import { toast } from "sonner";
 
 interface CursoForm {
   titulo: string;
   subtitulo: string;
   nivel: string;
   duracao: string;
-  preco: number;
-  precoOriginal: number;
+  preco: string;
   idioma: string;
   tags: string[];
   descricao: string;
   capaUrl: string;
   status: "RASCUNHO" | "PUBLICADO";
-  mentorNome: string;
-  mentorAvatar: string;
+  bolsaId: string;
 }
 
 const emptyForm: CursoForm = {
   titulo: "", subtitulo: "", nivel: "", duracao: "",
-  preco: 0, precoOriginal: 0, idioma: "Português", tags: [],
+  preco: "", idioma: "Português", tags: [],
   descricao: "", capaUrl: "", status: "RASCUNHO",
-  mentorNome: "", mentorAvatar: "",
+  bolsaId: SEM_BOLSA,
 };
 
 const levels = ["Iniciante", "Intermédio", "Avançado"];
@@ -51,15 +53,13 @@ function mapCursoToForm(curso: Curso): CursoForm {
     subtitulo: curso.subtitulo || "",
     nivel: curso.nivel || "",
     duracao: curso.duracao || "",
-    preco: curso.preco,
-    precoOriginal: curso.precoOriginal || 0,
+    preco: String(curso.preco),
     idioma: curso.idioma || "Português",
     tags: curso.tags || [],
     descricao: curso.descricao || "",
     capaUrl: curso.capaUrl || "",
     status: curso.status,
-    mentorNome: curso.mentorNome || "",
-    mentorAvatar: curso.mentorAvatar || "",
+    bolsaId: campoDaBolsaId(curso.bolsaId),
   };
 }
 
@@ -143,20 +143,24 @@ export function CursosAdmin() {
   });
 
   const handleSave = () => {
+    const erro = erroNoCampoDoCurso(form.bolsaId, form.preco);
+    if (erro) {
+      toast.error(erro);
+      return;
+    }
+
     const payload: Partial<Curso> = {
+      bolsaId: bolsaIdDoCampo(form.bolsaId),
       titulo: form.titulo,
       subtitulo: form.subtitulo || undefined,
       nivel: form.nivel || undefined,
       duracao: form.duracao || undefined,
-      preco: form.preco,
-      precoOriginal: form.precoOriginal || undefined,
+      preco: form.preco === "" ? 0 : Number(form.preco),
       idioma: form.idioma || undefined,
       tags: form.tags,
       descricao: form.descricao || undefined,
       capaUrl: form.capaUrl || undefined,
       status: form.status,
-      mentorNome: form.mentorNome || undefined,
-      mentorAvatar: form.mentorAvatar || undefined,
     };
     if (editingId) {
       updateMutation.mutate({ id: editingId, payload });
@@ -284,8 +288,8 @@ export function CursosAdmin() {
             exit={{ opacity: 0, x: -20 }}
             className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden"
           >
-            <div className="p-5 border-b border-gray-100 dark:border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-white/[0.06] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }}
                   className="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.06]"
@@ -299,11 +303,11 @@ export function CursosAdmin() {
                   <p className="text-sm text-gray-500 dark:text-zinc-500">Preencha os dados do curso</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button className="bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }} disabled={isFormLoading}>
+              <div className="flex shrink-0 items-center gap-3">
+                <Button className="flex-1 sm:flex-none bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }} disabled={isFormLoading}>
                   Cancelar
                 </Button>
-                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
+                <Button className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
                   {isFormLoading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Check size={16} className="mr-2" />}
                   Guardar
                 </Button>
@@ -332,7 +336,32 @@ export function CursosAdmin() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-700 dark:text-zinc-300">Bolsa vinculada (opcional)</Label>
+                  <div className="mt-1.5">
+                    <CursoBolsaSelect
+                      value={form.bolsaId}
+                      onChange={(bolsaId) => setForm({ ...form, bolsaId })}
+                      bolsaAtual={cursos.find((c) => c.id === editingId)?.bolsa}
+                    />
+                  </div>
+                </div>
+
+                {form.bolsaId === SEM_BOLSA && (
+                  <div>
+                    <Label className="text-gray-700 dark:text-zinc-300">Valor do curso (Kz)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.preco}
+                      onChange={(e) => setForm({ ...form, preco: e.target.value })}
+                      placeholder="Ex: 12000 (0 para gratuito)"
+                      className="mt-1.5"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-700 dark:text-zinc-300">Nível</Label>
                     <Select value={form.nivel} onValueChange={(v) => setForm({ ...form, nivel: v })}>
@@ -344,7 +373,7 @@ export function CursosAdmin() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-700 dark:text-zinc-300">Duração</Label>
                     <Input
@@ -360,50 +389,6 @@ export function CursosAdmin() {
                       value={form.idioma}
                       onChange={(e) => setForm({ ...form, idioma: e.target.value })}
                       placeholder="Ex: Português"
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Preço (Kz)</Label>
-                    <Input
-                      type="number"
-                      value={form.preco}
-                      onChange={(e) => setForm({ ...form, preco: parseFloat(e.target.value) || 0 })}
-                      placeholder="12000"
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Preço Original (Kz)</Label>
-                    <Input
-                      type="number"
-                      value={form.precoOriginal}
-                      onChange={(e) => setForm({ ...form, precoOriginal: parseFloat(e.target.value) || 0 })}
-                      placeholder="24000"
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Instrutor</Label>
-                    <Input
-                      value={form.mentorNome}
-                      onChange={(e) => setForm({ ...form, mentorNome: e.target.value })}
-                      placeholder="Ex: Ana Luísa Ferreira"
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Avatar URL (opcional)</Label>
-                    <Input
-                      value={form.mentorAvatar}
-                      onChange={(e) => setForm({ ...form, mentorAvatar: e.target.value })}
-                      placeholder="URL do avatar..."
                       className="mt-1.5"
                     />
                   </div>
@@ -541,10 +526,10 @@ export function CursosAdmin() {
                 </Select>
               </div>
 
-              <ScrollArea className="w-full whitespace-nowrap">
-                <table className="w-full">
+              <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+                <table className={fragmentedTable}>
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/[0.06]">
+                    <tr>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Curso</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Duração</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Aulas</th>
@@ -556,13 +541,13 @@ export function CursosAdmin() {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={7} className="text-center py-12">
                           <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
                         </td>
                       </tr>
                     ) : filteredCursos.length === 0 ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={7} className="text-center py-12">
                           <BookOpen size={40} className="mx-auto text-gray-300 dark:text-zinc-700 mb-3" />
                           <p className="text-gray-500 dark:text-zinc-500">Nenhum curso encontrado</p>
@@ -570,22 +555,24 @@ export function CursosAdmin() {
                       </tr>
                     ) : (
                       filteredCursos.map((curso) => (
-                        <tr
-                          key={curso.id}
-                          className="border-b border-gray-50 dark:border-white/[0.05] hover:bg-gray-50 dark:hover:bg-white/[0.03]"
-                        >
+                        <tr key={curso.id} className={fragmentedRow}>
                           <td className="px-5 py-4">
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">{curso.titulo}</p>
                               {curso.subtitulo && (
                                 <p className="text-xs text-gray-500 dark:text-zinc-500 truncate max-w-[250px]">{curso.subtitulo}</p>
                               )}
+                              {curso.bolsa && (
+                                <p className="mt-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[250px]">
+                                  Bolsa: {curso.bolsa.titulo}
+                                </p>
+                              )}
                             </div>
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-600 dark:text-zinc-400">{curso.duracao || "-"}</td>
                           <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">{curso.quantAulas}</td>
                           <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">{curso.estudantes}</td>
-                          <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">{curso.preco.toLocaleString()} Kz</td>
+                          <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">{curso.bolsaId && curso.preco <= 0 ? "Incluído na bolsa" : `${curso.preco.toLocaleString()} Kz`}</td>
                           <td className="px-5 py-4">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                               curso.status === "PUBLICADO"
@@ -596,32 +583,32 @@ export function CursosAdmin() {
                             </span>
                           </td>
                           <td className="px-5 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => handleViewDetails(curso.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06]" title="Ver detalhes">
-                                <Eye size={14} className="text-emerald-500" />
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={() => handleViewDetails(curso.id)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-white" title="Ver detalhes">
+                                <Eye size={14} />
                               </button>
                               {curso.status === "RASCUNHO" && (
                                 <button
                                   onClick={() => handlePublishToggle(curso)}
                                   disabled={publishMutation.isPending}
-                                  className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-50"
+                                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-white"
                                   title="Publicar"
                                 >
                                   {publishMutation.isPending ? (
-                                    <Loader2 size={14} className="animate-spin text-emerald-500" />
+                                    <Loader2 size={14} className="animate-spin" />
                                   ) : (
-                                    <Check size={14} className="text-emerald-500" />
+                                    <Check size={14} />
                                   )}
                                 </button>
                               )}
-                              <button onClick={() => handleEdit(curso)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06]">
-                                <Edit size={14} className="text-gray-400 dark:text-zinc-500" />
+                              <button onClick={() => handleEdit(curso)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-white">
+                                <Edit size={14} />
                               </button>
-                              <button onClick={() => handleDelete(curso.id)} disabled={deleteMutation.isPending} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50">
+                              <button onClick={() => handleDelete(curso.id)} disabled={deleteMutation.isPending} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
                                 {deleteMutation.isPending ? (
-                                  <Loader2 size={14} className="animate-spin text-red-400" />
+                                  <Loader2 size={14} className="animate-spin" />
                                 ) : (
-                                  <Trash2 size={14} className="text-red-400 dark:text-red-500" />
+                                  <Trash2 size={14} />
                                 )}
                               </button>
                             </div>

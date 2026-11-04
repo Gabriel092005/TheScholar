@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Share2,
-  MoreHorizontal, ChevronRight, Search, FileText,
+  MoreHorizontal, ChevronRight, Search, FileText, Newspaper,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { CardAccent, Reveal, UserPageHeader, cardTitle, userCard } from "@/components/user-ui";
 import { useQuery } from "@tanstack/react-query";
 import { novidadesApi } from "@/api/novidades";
 import { api, getUploadUrl } from "@/lib/axios";
@@ -67,27 +68,27 @@ export function NovidadesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b]">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/[0.06]">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Novidades</h1>
-            <p className="text-[11px] text-gray-400 dark:text-zinc-500">Fique por dentro</p>
-          </div>
-          <div className="relative w-44">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar..."
-              className="pl-9 h-9 text-xs rounded-xl bg-gray-50 dark:bg-white/[0.04] border-gray-200 dark:border-white/[0.08]"
-            />
-          </div>
-        </div>
+      <div className="max-w-2xl mx-auto px-4 pt-8 sm:pt-10">
+        <UserPageHeader
+          icon={Newspaper}
+          title="Novidades"
+          description="Fique por dentro das últimas notícias."
+          action={
+            <div className="relative w-full sm:w-52">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar..."
+                className="pl-9 h-10 text-sm rounded-xl bg-white dark:bg-white/[0.04] border-gray-200 dark:border-white/[0.08]"
+              />
+            </div>
+          }
+        />
       </div>
 
       {/* Feed */}
-      <div className="max-w-xl mx-auto px-4 py-5 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 pb-10 space-y-5">
         <AnimatePresence>
           {filtered.length === 0 ? (
             <motion.div
@@ -109,14 +110,9 @@ export function NovidadesPage() {
               const isLiked = liked.has(novidade.id);
 
               return (
-                <motion.article
-                  key={novidade.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
-                >
+                <Reveal key={novidade.id} index={i} className="h-auto">
+                <article className={userCard}>
+                  <CardAccent />
                   {/* Card header — avatar + nome + data */}
                   <div className="flex items-center gap-3 px-4 pt-4 pb-2">
                     <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xs shrink-0">
@@ -152,7 +148,8 @@ export function NovidadesPage() {
                         <img
                           src={coverUrl}
                           alt={novidade.title}
-                          className="w-full h-auto max-h-80 object-cover hover:scale-[1.02] transition-transform duration-500"
+                          loading="lazy"
+                          className="w-full h-auto max-h-80 object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = "none";
                           }}
@@ -164,7 +161,7 @@ export function NovidadesPage() {
                   {/* Content */}
                   <div className="px-4 pt-3 pb-2">
                     <h2
-                      className="text-base font-bold text-gray-900 dark:text-white leading-snug cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                      className={`${cardTitle} text-base cursor-pointer`}
                       onClick={() => navigate(`/novidades/${novidade.id}`)}
                     >
                       {novidade.title}
@@ -216,7 +213,8 @@ export function NovidadesPage() {
                       <ChevronRight size={14} />
                     </button>
                   </div>
-                </motion.article>
+                </article>
+                </Reveal>
               );
             })
           )}

@@ -56,6 +56,11 @@ export function AulaOnlineRoomPage() {
 
     participarMutation.mutate();
 
+    // Só o anfitrião põe a aula ao vivo; quem assiste não altera o estado.
+    if (aula.status === "AGENDADA" && aula.hostId === user?.id) {
+      updateStatusMutation.mutate({ status: "AO_VIVO" });
+    }
+
     const domain = JITSI_DOMAIN;
     const roomName = `${JITSI_APP_ID}/afroscholars-${aula.roomId}`;
     const container = jitsiContainerRef.current;
@@ -80,10 +85,6 @@ export function AulaOnlineRoomPage() {
       return () => {
         document.head.removeChild(script);
       };
-    }
-
-    if (aula.status === "AGENDADA") {
-      updateStatusMutation.mutate({ status: "AO_VIVO" });
     }
 
     return () => {
@@ -124,7 +125,8 @@ export function AulaOnlineRoomPage() {
       (window as any).jitsiApi = api;
       setJitsiLoaded(true);
       api.addEventListener("readyToClose", () => {
-        if (aula?.status === "AO_VIVO") {
+        // Só o anfitrião termina a aula ao sair; os restantes apenas saem da sala.
+        if (aula?.hostId === user?.id) {
           updateStatusMutation.mutate({ status: "FINALIZADA" });
         }
       });
@@ -153,6 +155,7 @@ export function AulaOnlineRoomPage() {
   }, [aula?.gravacaoUrl]);
 
   const linkCompartilhar = aula ? `${window.location.origin}/aulas/${aula.id}` : "";
+  const voltarPara = user?.role === "GESTOR" && aula?.hostId === user.id ? "/gestor/aulas" : "/aulas";
 
   function copiarLink() {
     navigator.clipboard.writeText(linkCompartilhar).then(() => {
@@ -184,13 +187,26 @@ export function AulaOnlineRoomPage() {
     );
   }
 
+  if (aula.status === "CANCELADA") {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] gap-3 px-5">
+        <VideoOff className="h-10 w-10 text-gray-300 dark:text-zinc-600" />
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">Esta aula foi cancelada</p>
+        <Button variant="outline" onClick={() => navigate(voltarPara)} className="rounded-xl dark:text-white">
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Top bar */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/[0.06] bg-white dark:bg-[#111113] shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate("/aulas")}
+            onClick={() => navigate(voltarPara)}
+            aria-label="Voltar"
             className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.06] text-gray-500 dark:text-zinc-400 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -289,7 +305,7 @@ export function AulaOnlineRoomPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => { setEditandoGravacao(false); setGravacaoInput(aula.gravacaoUrl || ""); }}
-                    className="rounded-xl h-10 text-xs"
+                    className="rounded-xl h-10 text-xs dark:text-white"
                   >
                     Cancelar
                   </Button>
@@ -299,7 +315,7 @@ export function AulaOnlineRoomPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => { setEditandoGravacao(true); setGravacaoInput(aula.gravacaoUrl || ""); }}
-                  className="rounded-xl h-10 text-xs"
+                  className="rounded-xl h-10 text-xs dark:text-white"
                 >
                   <Link2 className="h-3.5 w-3.5 mr-1.5" />
                   {aula.gravacaoUrl ? "Alterar gravação" : "Adicionar gravação"}

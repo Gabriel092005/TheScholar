@@ -40,6 +40,11 @@ export const aulasApi = {
     return data;
   },
 
+  listMinhas: async () => {
+    const { data } = await api.get<PaginatedResponse<AulaOnline>>("/gestor/aulas");
+    return data;
+  },
+
   get: async (id: string) => {
     const { data } = await api.get<AulaOnline>(`/aulas/${id}`);
     return data;

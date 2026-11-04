@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { depoimentosApi } from "@/api/depoimentos";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
 import toast from "react-hot-toast";
 
 export function DepoimentosAdmin() {
@@ -85,10 +86,10 @@ export function DepoimentosAdmin() {
           </Select>
         </div>
 
-        <ScrollArea className="w-full whitespace-nowrap">
-          <table className="w-full">
+        <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+          <table className={fragmentedTable}>
             <thead>
-              <tr className="border-b border-gray-100 dark:border-white/[0.06]">
+              <tr>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Utilizador</th>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Depoimento</th>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Rating</th>
@@ -99,12 +100,12 @@ export function DepoimentosAdmin() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" /></td></tr>
+                <tr className={fragmentedRow}><td colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-500 dark:text-zinc-500">Nenhum depoimento encontrado</td></tr>
+                <tr className={fragmentedRow}><td colSpan={6} className="text-center py-12 text-gray-500 dark:text-zinc-500">Nenhum depoimento encontrado</td></tr>
               ) : (
                 filtered.map((d) => (
-                  <tr key={d.id} className="border-b border-gray-50 dark:border-white/[0.05] hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                  <tr key={d.id} className={fragmentedRow}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
@@ -120,7 +121,7 @@ export function DepoimentosAdmin() {
                       <p className="text-sm text-gray-600 dark:text-zinc-400 truncate">{d.texto}</p>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-zinc-400">
                         <Star size={12} /> {d.rating}/5
                       </span>
                     </td>
@@ -144,7 +145,7 @@ export function DepoimentosAdmin() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs h-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                            className="h-8 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
                             disabled={aprovarMutation.isPending}
                             onClick={() => aprovarMutation.mutate({ id: d.id, status: "PUBLICADO" })}
                           >
@@ -155,7 +156,7 @@ export function DepoimentosAdmin() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs h-8 text-yellow-500 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-500/10"
+                            className="h-8 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
                             disabled={aprovarMutation.isPending}
                             onClick={() => aprovarMutation.mutate({ id: d.id, status: "RASCUNHO" })}
                           >
@@ -165,7 +166,7 @@ export function DepoimentosAdmin() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs h-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          className="h-8 text-gray-400 hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                           disabled={deleteMutation.isPending}
                           onClick={async () => { const ok = await confirm("Remover depoimento?"); if (ok) deleteMutation.mutate(d.id); }}
                         >

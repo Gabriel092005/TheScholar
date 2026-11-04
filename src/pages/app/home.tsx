@@ -4,8 +4,9 @@ import {
   ArrowRight, Search, BookOpenText, Target,
   ChevronDown, Users, Award,
   Heart, HelpCircle, UserCheck, Zap,
-  TrendingUp, Filter, Quote, Image as ImageIcon, Pencil, BookHeart, Globe,
-  GraduationCap, FileText, Plane, Landmark, Briefcase, CheckCircle
+  TrendingUp, Filter, Quote, Pencil, BookHeart, Globe,
+  GraduationCap, FileText, Plane, Landmark, Briefcase,
+  Video, Clock, Calendar, MapPin, PlayCircle, Loader2, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,18 +18,24 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
 import { bolsasApi } from "@/api/bolsas";
+import { cursosApi, type Curso } from "@/api/cursos";
+import { aulasApi, type AulaOnline } from "@/api/aulas";
 import { useUser } from "@/api/useGetProfile";
+import type { User } from "@/api/auth";
 import { depoimentosApi, type Depoimento } from "@/api/depoimentos";
-import { mapaGlobalApi, type MapaGlobalItem } from "@/api/mapa-global";
+import { mapaGlobalApi } from "@/api/mapa-global";
 import { MapaGlobal } from "@/components/mapa-global/MapaGlobal";
 import { novidadesApi } from "@/api/novidades";
-import { api, getUploadUrl } from "@/lib/axios";
+import { toast } from "sonner";
+import { gestorApi, type DocumentoPublico } from "@/api/gestor";
+import { getUploadUrl } from "@/lib/axios";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import img1 from "@/assets/WhatsApp Image 2026-04-06 512.26.31.jpeg";
 import img2 from "@/assets/CORRECTA.jpeg";
 import img3 from "@/assets/WhatsApp Image 2026-04-06 at 12.26.32.jpeg";
 import { homeBannersApi } from "@/api/home-banners";
+import { CardAccent, LiveDot, Reveal, UserPageHeader, cardArrow, cardTitle, iconTile, userCard } from "@/components/user-ui";
 
 function formataData(data?: string): string {
   if (!data) return "";
@@ -442,7 +449,478 @@ function SeuFuturoSection() {
   );
 }
 
-export function HomePage() {
+/* ─── User Dashboard ────────────────────────────────────── */
+
+const formataPreco = (preco: number) =>
+  new Intl.NumberFormat("pt-PT", { style: "currency", currency: "AOA" }).format(preco);
+
+const formataTamanho = (bytes?: number | null) => {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+function DashboardSectionHeader({
+  title,
+  subtitle,
+  href,
+  onSeeAll,
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+  onSeeAll: (href: string) => void;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 mb-5">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+          {title}
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 mt-0.5">{subtitle}</p>
+      </div>
+      <button
+        onClick={() => onSeeAll(href)}
+        className="group shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 transition-colors"
+      >
+        Ver todas
+        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+      </button>
+    </div>
+  );
+}
+
+function DashboardEmpty({ icon: Icon, text }: { icon: typeof BookOpenText; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/[0.08] bg-gray-50/60 dark:bg-white/[0.02] py-10 px-6 text-center">
+      <Icon className="h-7 w-7 text-gray-300 dark:text-zinc-600 mb-2" />
+      <p className="text-xs text-gray-400 dark:text-zinc-500">{text}</p>
+    </div>
+  );
+}
+
+function BolsaDashboardCard({ bolsa, index, onClick }: { bolsa: any; index: number; onClick: () => void }) {
+  const capa = bolsa.imagemUrl
+    || (bolsa.imagemBg
+      ? (bolsa.imagemBg.startsWith("http") ? bolsa.imagemBg : getUploadUrl(`/uploads/${bolsa.imagemBg}`))
+      : null);
+
+  return (
+    <Reveal index={index}>
+      <button onClick={onClick} className={`${userCard} flex h-full w-full flex-col`}>
+        <CardAccent />
+        <div className="relative h-28 w-full overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/5">
+          {capa ? (
+            <img
+              src={capa}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <GraduationCap className="h-9 w-9 text-emerald-300 transition-transform duration-500 group-hover:scale-110 dark:text-emerald-500/40" />
+            </div>
+          )}
+          <span className="absolute left-2.5 top-2.5 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-semibold text-emerald-700 shadow-sm backdrop-blur-sm dark:bg-black/60 dark:text-emerald-300">
+            {getNivelLabel(bolsa.nivel)}
+          </span>
+        </div>
+        <div className="flex w-full flex-1 flex-col p-4">
+          <h3 className={`${cardTitle} text-sm line-clamp-2`}>{bolsa.titulo}</h3>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400">
+            <MapPin className="h-3 w-3 shrink-0 text-emerald-500" />
+            <span className="truncate">{bolsa.pais || bolsa.instituicao || "Internacional"}</span>
+          </p>
+          <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+            <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-gray-500 dark:text-zinc-400">
+              {bolsa.prazo && (
+                <>
+                  <Calendar className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{formataData(bolsa.prazo)}</span>
+                </>
+              )}
+            </span>
+            <span className={cardArrow}>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </div>
+      </button>
+    </Reveal>
+  );
+}
+
+function CursoDashboardCard({ curso, index, onClick }: { curso: Curso; index: number; onClick: () => void }) {
+  return (
+    <Reveal index={index}>
+      <button onClick={onClick} className={`${userCard} flex h-full w-full flex-col`}>
+        <CardAccent />
+        <div className="relative h-40 w-full overflow-hidden bg-gray-100 dark:bg-zinc-900">
+          {curso.capaUrl ? (
+            <img
+              src={getUploadUrl(curso.capaUrl)}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <BookOpenText className="h-10 w-10 text-gray-300 dark:text-zinc-700" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <span className="absolute left-3 top-3 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-semibold text-gray-800 shadow-sm backdrop-blur-sm dark:bg-black/60 dark:text-white">
+            {curso.categoria}
+          </span>
+        </div>
+        <div className="flex w-full flex-1 flex-col p-4">
+          <h3 className={`${cardTitle} text-[15px] line-clamp-2`}>{curso.titulo}</h3>
+          {curso.mentorNome && (
+            <p className="mt-1 truncate text-xs text-gray-500 dark:text-zinc-400">{curso.mentorNome}</p>
+          )}
+          <div className="mt-2.5 flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1">
+              <PlayCircle className="h-3.5 w-3.5" />
+              {curso.quantAulas} aulas
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              {curso.estudantes}
+            </span>
+          </div>
+          <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+            <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+              {formataPreco(curso.preco)}
+            </span>
+            <span className={cardArrow}>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </div>
+      </button>
+    </Reveal>
+  );
+}
+
+function AulaDashboardCard({ aula, aoVivo, index, onClick }: { aula: AulaOnline; aoVivo: boolean; index: number; onClick: () => void }) {
+  return (
+    <Reveal index={index}>
+      <button onClick={onClick} className={`${userCard} flex h-full w-full items-center gap-4 p-4`}>
+        <CardAccent />
+        <div className={aoVivo ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-500 text-white shadow-lg shadow-green-500/30" : iconTile}>
+          <Video className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold ${
+            aoVivo ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"
+          }`}>
+            {aoVivo && <LiveDot />}
+            {aoVivo ? "Ao vivo" : "Agendada"}
+          </span>
+          <h3 className={`${cardTitle} text-sm truncate mt-0.5`}>{aula.titulo}</h3>
+          <p className="truncate text-xs text-gray-500 dark:text-zinc-400">{aula.host.nome}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formataData(aula.data)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {format(parseISO(aula.data), "HH:mm")}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {aula._count?.participantes ?? 0}
+            </span>
+          </div>
+        </div>
+        <span className={cardArrow}>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </button>
+    </Reveal>
+  );
+}
+
+function DocumentoDashboardCard({ documento, index }: { documento: DocumentoPublico; index: number }) {
+  const navigate = useNavigate();
+
+  const abrir = () => {
+    if (!documento.temAcesso) {
+      navigate("/documentos");
+    } else if (documento.linkExterno) {
+      window.open(documento.linkExterno, "_blank", "noopener,noreferrer");
+    } else {
+      gestorApi.abrirDocumento(documento).catch(() => toast.error("Não foi possível abrir o documento"));
+    }
+  };
+
+  return (
+    <Reveal index={index}>
+      <button
+        type="button"
+        onClick={abrir}
+        className={`${userCard} flex h-full w-full flex-col p-4 text-left`}
+      >
+        <CardAccent />
+        <div className="flex items-start gap-3">
+          <div className={iconTile}>
+            <FileText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className={`${cardTitle} text-sm line-clamp-2`}>{documento.titulo}</h3>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-zinc-400">
+              {documento.categoria || "Geral"}
+              {documento.fileSize ? ` · ${formataTamanho(documento.fileSize)}` : ""}
+            </p>
+          </div>
+        </div>
+        {documento.descricao && (
+          <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-gray-500 dark:text-zinc-400">
+            {documento.descricao}
+          </p>
+        )}
+        <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <Download className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-y-0.5" />
+          {documento.temAcesso ? "Abrir documento" : `Comprar por ${documento.preco.toLocaleString("pt-PT")} Kz`}
+        </span>
+      </button>
+    </Reveal>
+  );
+}
+
+function UserDashboard({ user }: { user: User }) {
+  const navigate = useNavigate();
+  const primeiroNome = user.nome.split(" ")[0];
+  const { data: bolsasRes, isLoading: bolsasLoading } = useQuery({
+    queryKey: ["dashboard-bolsas"],
+    queryFn: () => bolsasApi.list({ status: "PUBLICADA", limit: 4, ocultarMinhas: true }),
+    staleTime: 1000 * 60 * 5,
+  });
+  const bolsas = bolsasRes?.data || [];
+
+  const { data: cursosRes, isLoading: cursosLoading } = useQuery({
+    queryKey: ["dashboard-cursos"],
+    queryFn: () => cursosApi.list({ status: "PUBLICADO", limit: 3 }),
+    staleTime: 1000 * 60 * 5,
+  });
+  const cursos = cursosRes?.data || [];
+
+  const { data: aulasRes, isLoading: aulasLoading } = useQuery({
+    queryKey: ["dashboard-aulas"],
+    // A lista vem das datas mais distantes para as mais antigas: com poucas linhas,
+    // as aulas agendadas podiam deixar de fora uma que já está a decorrer.
+    queryFn: () => aulasApi.list({ limit: 100 }),
+    staleTime: 1000 * 60,
+    // O destaque tem de aparecer mesmo com a home já aberta.
+    refetchInterval: 1000 * 60,
+  });
+  const agora = new Date();
+  const aulasAtivas = (aulasRes?.data || [])
+    .filter(
+      (a) =>
+        a.status === "AO_VIVO" ||
+        (a.status === "AGENDADA" && new Date(a.data) >= agora)
+    )
+    .sort((a, b) => {
+      if (a.status === "AO_VIVO" && b.status !== "AO_VIVO") return -1;
+      if (b.status === "AO_VIVO" && a.status !== "AO_VIVO") return 1;
+      return new Date(a.data).getTime() - new Date(b.data).getTime();
+    });
+  const aulasDisponiveis = aulasAtivas.slice(0, 4);
+
+  const aoVivoCount = aulasAtivas.filter((a) => a.status === "AO_VIVO").length;
+
+  const { data: documentos = [], isLoading: documentosLoading } = useQuery({
+    queryKey: ["dashboard-documentos"],
+    queryFn: () => gestorApi.listDocumentosPublicos(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const stats = [
+    { icon: GraduationCap, value: bolsasRes?.meta?.total ?? bolsas.length, label: "Bolsas disponíveis", href: "/bolsas", loading: bolsasLoading },
+    { icon: BookOpenText, value: cursosRes?.meta?.total ?? cursos.length, label: "Cursos disponíveis", href: "/cursos", loading: cursosLoading },
+    { icon: Video, value: aulasAtivas.length, label: "Aulas ao vivo e agendadas", href: "/aulas", loading: aulasLoading, aoVivo: aoVivoCount },
+  ];
+
+  return (
+    <div className="bg-background text-gray-900 dark:text-white">
+      <div className="container mx-auto max-w-6xl px-5 sm:px-8 py-8 sm:py-10 space-y-10">
+        <UserPageHeader
+          className="mb-0"
+          title={`Olá, ${primeiroNome}`}
+          description={
+            aoVivoCount > 0 ? (
+              <span className="inline-flex items-center gap-2">
+                <LiveDot />
+                Tem {aoVivoCount} aula{aoVivoCount !== 1 ? "s" : ""} a decorrer agora.
+              </span>
+            ) : (
+              "Descubra as bolsas, cursos e aulas ao vivo disponíveis para si."
+            )
+          }
+        />
+
+        {/* Quick stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {stats.map((stat, i) => (
+            <Reveal key={stat.label} index={i}>
+              <button
+                onClick={() => navigate(stat.href)}
+                className={`${userCard} flex h-full w-full items-center gap-4 p-5 ${
+                  stat.aoVivo ? "border-green-500/60 pt-10 ring-1 ring-green-500/40 dark:border-green-500/50 lg:pt-5" : ""
+                }`}
+              >
+                <CardAccent />
+                {!!stat.aoVivo && (
+                  <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-green-700 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                    <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75 motion-reduce:animate-none" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                    </span>
+                    {stat.aoVivo > 1 ? `${stat.aoVivo} ao vivo` : "Ao vivo"}
+                  </span>
+                )}
+                <div className={iconTile}>
+                  <stat.icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white leading-none tabular-nums">
+                    {stat.loading ? "–" : <DynamicCounter to={stat.value} duration={1.2} />}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1.5">
+                    {stat.label}
+                  </p>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-300 transition-all duration-300 group-hover:translate-x-1 group-hover:text-emerald-500 dark:text-zinc-600" />
+              </button>
+            </Reveal>
+          ))}
+        </div>
+
+        {/* Bolsas */}
+        <section>
+          <DashboardSectionHeader
+            title="Bolsas disponíveis"
+            subtitle="As oportunidades de estudo mais recentes"
+            href="/bolsas"
+            onSeeAll={navigate}
+          />
+          {bolsasLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-44 rounded-2xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : bolsas.length === 0 ? (
+            <DashboardEmpty icon={GraduationCap} text="Nenhuma bolsa disponível de momento." />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {bolsas.slice(0, 4).map((bolsa, i) => (
+                <BolsaDashboardCard
+                  key={bolsa.id}
+                  bolsa={bolsa}
+                  index={i}
+                  onClick={() => navigate(`/bolsas/${bolsa.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Cursos */}
+        <section>
+          <DashboardSectionHeader
+            title="Cursos disponíveis"
+            subtitle="Programas de preparação para o seu futuro"
+            href="/cursos"
+            onSeeAll={navigate}
+          />
+          {cursosLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-56 rounded-2xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : cursos.length === 0 ? (
+            <DashboardEmpty icon={BookOpenText} text="Nenhum curso disponível de momento." />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cursos.slice(0, 3).map((curso, i) => (
+                <CursoDashboardCard
+                  key={curso.id}
+                  curso={curso}
+                  index={i}
+                  onClick={() => navigate(`/cursos/${curso.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Aulas ao vivo */}
+        <section>
+          <DashboardSectionHeader
+            title="Aulas ao vivo"
+            subtitle="Aulas a decorrer e próximas sessões"
+            href="/aulas"
+            onSeeAll={navigate}
+          />
+          {aulasLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : aulasDisponiveis.length === 0 ? (
+            <DashboardEmpty icon={Video} text="Nenhuma aula ao vivo disponível de momento." />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {aulasDisponiveis.map((aula, i) => (
+                <AulaDashboardCard
+                  key={aula.id}
+                  aula={aula}
+                  aoVivo={aula.status === "AO_VIVO"}
+                  index={i}
+                  onClick={() => navigate(`/aulas/${aula.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Documentos */}
+        <section>
+          <DashboardSectionHeader
+            title="Documentos"
+            subtitle="Guias, editais e materiais úteis para a sua candidatura"
+            href="/documentos"
+            onSeeAll={navigate}
+          />
+          {documentosLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-28 rounded-2xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : documentos.length === 0 ? (
+            <DashboardEmpty icon={FileText} text="Nenhum documento disponível de momento." />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {documentos.slice(0, 6).map((documento, i) => (
+                <DocumentoDashboardCard key={documento.id} documento={documento} index={i} />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function GuestHomePage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const heroRef = useRef(null);
@@ -493,7 +971,7 @@ export function HomePage() {
       <section
         ref={heroRef}
         className={`relative w-full lg:pr-[10px] ${
-          user ? "min-h-[50vh] sm:min-h-[70vh] lg:min-h-[90vh] lg:max-h-[900px]" : "min-h-[80vh] sm:min-h-[85vh] lg:min-h-[90vh] max-h-[900px]"
+          user ? "min-h-[40vh] sm:min-h-[48vh] lg:min-h-[55vh] lg:max-h-[620px]" : "min-h-[52vh] sm:min-h-[58vh] lg:min-h-[62vh] max-h-[650px]"
         }`}
       >
         {/* Background slideshow (decorative, no focus) */}
@@ -530,8 +1008,8 @@ export function HomePage() {
       <motion.div
   className="
     relative z-10 flex flex-col justify-end min-h-full w-full
-    pt-16 sm:pt-24
-    pb-8 sm:pb-14 md:pb-20
+    pt-12 sm:pt-16
+    pb-6 sm:pb-10 md:pb-14
     px-5 sm:px-8 md:px-16 lg:px-24
     max-w-7xl mx-auto
   "
@@ -553,10 +1031,10 @@ export function HomePage() {
       variants={fade(0.05)}
       className="
         text-[1.5rem] leading-[1.1]
-        sm:text-[2rem]
-        md:text-[2.5rem]
-        lg:text-[3.2rem]
-        xl:text-[4rem]
+        sm:text-[1.9rem]
+        md:text-[2.3rem]
+        lg:text-[2.8rem]
+        xl:text-[3.2rem]
         font-black tracking-tight max-w-5xl text-white
       "
     >
@@ -643,7 +1121,7 @@ export function HomePage() {
             document.getElementById("oportunidades-destaque")?.scrollIntoView({ behavior: "smooth" });
           }}
           className="h-11 sm:h-12 px-6 sm:px-8 text-sm font-bold group
-            bg-emerald-500 text-black hover:bg-emerald-400 active:scale-95
+            bg-emerald-500 dark:text-white hover:bg-emerald-400 active:scale-95
             rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-200"
         >
           {user ? "Ver Oportunidades" : "Explorar Oportunidades"}
@@ -1286,6 +1764,22 @@ export function HomePage() {
       </footer>
     </div>
   );
+}
+
+export function HomePage() {
+  const { user, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[60vh] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (user) return <UserDashboard user={user} />;
+
+  return <GuestHomePage />;
 }
 
 export default HomePage;

@@ -14,10 +14,15 @@ export default defineConfig({
       theme_color: '#059669',
       background_color: '#059669',
       display: 'standalone',
-      orientation: 'portrait-primary',
       lang: 'pt',
+      id: '/',
       start_url: '/',
       scope: '/',
+      shortcuts: [
+        { name: 'Bolsas', url: '/bolsas' },
+        { name: 'Cursos', url: '/cursos' },
+        { name: 'Comunidades', url: '/comunidades' },
+      ],
       icons: [
         {
           src: 'icons/pwa-64x64.png',
@@ -47,17 +52,22 @@ export default defineConfig({
     workbox: {
       maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+      // O service-worker.js é tratado à parte: sem o importar, as notificações push nunca aparecem.
+      globIgnores: ['service-worker.js'],
+      importScripts: ['service-worker.js'],
+      cleanupOutdatedCaches: true,
+      navigateFallback: 'index.html',
+      // Estes caminhos são da API: respondidos com o index.html, o login com Google nunca lá chegaria.
+      navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
+      // As respostas da API não ficam guardadas: são dados privados, e o aparelho pode ter outro utilizador.
       runtimeCaching: [
         {
-          urlPattern: /^https?:\/\/.*\/api\/.*/i,
-          handler: 'NetworkFirst',
+          urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+          handler: 'StaleWhileRevalidate',
           options: {
-            cacheName: 'api-cache',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24,
-            },
-            networkTimeoutSeconds: 10,
+            cacheName: 'google-fonts',
+            expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            cacheableResponse: { statuses: [0, 200] },
           },
         },
       ],

@@ -20,8 +20,12 @@ export function useNotificacoesSocket(usuarioId?: string) {
       }
       
       qc.invalidateQueries({ queryKey: ['notificacoes', usuarioId] });
-      
-      toast.success(notificacao.titulo, {
+      qc.invalidateQueries({ queryKey: ['meus-pagamentos'] });
+      qc.invalidateQueries({ queryKey: ['minhas-inscricoes'] });
+      qc.invalidateQueries({ queryKey: ['gestor'] });
+
+      const mostrar = notificacao.tipo === 'ERRO' ? toast.error : notificacao.tipo === 'INFO' ? toast.info : toast.success;
+      mostrar(notificacao.titulo, {
         description: notificacao.conteudo,
       });
     };

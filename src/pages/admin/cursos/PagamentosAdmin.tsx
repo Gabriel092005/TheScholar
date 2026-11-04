@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cursosApi, type CursoPagamento } from "@/api/cursos";
 import { api, getUploadUrl } from "@/lib/axios";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
+import { cobrancaMomenu } from "@/api/pagamentos";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -20,15 +22,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 type StatusType = "APROVADO" | "REJEITADO" | "CANCELADO";
 
 const PAYMENT_METHODS: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  EXPRESS:       { label: "Express",       icon: Smartphone, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
-  MULTICAIXA:    { label: "Multicaixa",    icon: CreditCard, color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-500/10" },
-  TRANSFERENCIA: { label: "Transferência", icon: Landmark,   color: "text-purple-600",  bg: "bg-purple-50 dark:bg-purple-500/10" },
+  EXPRESS:       { label: "Express",       icon: Smartphone, color: "text-gray-500 dark:text-zinc-400", bg: "bg-gray-100 dark:bg-white/[0.06]" },
+  MULTICAIXA:    { label: "Multicaixa",    icon: CreditCard, color: "text-gray-500 dark:text-zinc-400", bg: "bg-gray-100 dark:bg-white/[0.06]" },
+  "momenu-mcx":  { label: "Express",       icon: Smartphone, color: "text-gray-500 dark:text-zinc-400", bg: "bg-gray-100 dark:bg-white/[0.06]" },
+  reference:     { label: "Referência",    icon: CreditCard, color: "text-gray-500 dark:text-zinc-400", bg: "bg-gray-100 dark:bg-white/[0.06]" },
+  TRANSFERENCIA: { label: "Transferência", icon: Landmark,   color: "text-gray-500 dark:text-zinc-400", bg: "bg-gray-100 dark:bg-white/[0.06]" },
 };
 
 const COLORS = ["bg-emerald-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-orange-500", "bg-teal-500", "bg-rose-500"];
 
 const statusConfig: Record<string, { label: string; classes: string }> = {
-  PENDENTE:  { label: "Pendente",  classes: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" },
+  PENDENTE:  { label: "Aguarda pagamento",  classes: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" },
   APROVADO:  { label: "Aprovado",  classes: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
   REJEITADO: { label: "Rejeitado", classes: "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400" },
   CANCELADO: { label: "Cancelado", classes: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400" },
@@ -215,7 +219,7 @@ export function PagamentosAdmin() {
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Pagamentos de Cursos</h2>
           <p className="text-sm text-gray-500 dark:text-zinc-500 mt-0.5">
-            Aprovar ou rejeitar pagamentos dos usuários
+            O acesso é libertado automaticamente assim que o pagamento é confirmado
           </p>
         </div>
 
@@ -226,7 +230,7 @@ export function PagamentosAdmin() {
             </div>
             <div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{pendentes.length}</p>
-              <p className="text-sm text-gray-500 dark:text-zinc-400">Pendentes</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400">Aguardam pagamento</p>
             </div>
           </div>
           <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-gray-100 dark:border-zinc-800 p-5 flex items-center gap-5">
@@ -268,7 +272,7 @@ export function PagamentosAdmin() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="PENDENTE">Pendentes</SelectItem>
+                  <SelectItem value="PENDENTE">Aguardam pagamento</SelectItem>
                   <SelectItem value="APROVADO">Aprovados</SelectItem>
                   <SelectItem value="REJEITADO">Rejeitados</SelectItem>
                   <SelectItem value="CANCELADO">Cancelados</SelectItem>
@@ -285,10 +289,10 @@ export function PagamentosAdmin() {
           ) : (
             <>
               <div className="hidden md:block">
-                <ScrollArea className="w-full whitespace-nowrap">
-                <table className="w-full">
+                <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+                <table className={fragmentedTable}>
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-zinc-800">
+                    <tr>
                       <th className="text-left px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Usuário</th>
                       <th className="text-left px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Curso</th>
                       <th className="text-left px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Valor</th>
@@ -307,10 +311,7 @@ export function PagamentosAdmin() {
                         ? getUploadUrl(`/${pagamento.usuario.image_path}`)
                         : "";
                       return (
-                        <tr
-                          key={pagamento.id}
-                          className="border-b border-gray-50 dark:border-zinc-800/80 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
-                        >
+                        <tr key={pagamento.id} className={fragmentedRow}>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
                               <Avatar className="w-10 h-10 border border-gray-200 dark:border-gray-700 shrink-0">
@@ -363,10 +364,10 @@ export function PagamentosAdmin() {
                                 {expandedId === pagamento.id ? (
                                   <ChevronUp size={16} className="text-gray-400" />
                                 ) : (
-                                  <Eye size={16} className="text-emerald-500" />
+                                  <Eye size={16} className="text-gray-400 dark:text-zinc-500" />
                                 )}
                               </button>
-                              {pagamento.status === "PENDENTE" && (
+                              {pagamento.status === "PENDENTE" && !cobrancaMomenu(pagamento.metodo) && (
                                 <>
                                   <Button
                                     size="sm"
@@ -396,22 +397,6 @@ export function PagamentosAdmin() {
                                     Rejeitar
                                   </Button>
                                 </>
-                              )}
-                              {pagamento.status === "APROVADO" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-zinc-400 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800 h-9 px-4"
-                                  onClick={() => handleAvaliar(pagamento.id, "CANCELADO")}
-                                  disabled={avaliando === pagamento.id}
-                                >
-                                  {avaliando === pagamento.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4 mr-1.5" />
-                                  )}
-                                  Cancelar
-                                </Button>
                               )}
                               {pagamento.status !== "PENDENTE" && pagamento.status !== "APROVADO" && (
                                 <span className="text-sm text-gray-400 dark:text-zinc-500 italic">
@@ -496,7 +481,7 @@ export function PagamentosAdmin() {
                             <Eye size={16} className="text-emerald-500" />
                           )}
                         </button>
-                        {pagamento.status === "PENDENTE" && (
+                        {pagamento.status === "PENDENTE" && !cobrancaMomenu(pagamento.metodo) && (
                           <>
                             <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white h-9 px-4 flex-1"
                               onClick={() => handleAvaliar(pagamento.id, "APROVADO")}

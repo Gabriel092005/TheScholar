@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Calendar, FileText, Download, Loader2, User,
-  CheckCircle2, Send, AlertTriangle, CreditCard, Upload, X, Plus, ImageOff, Video,
+  CheckCircle2, Send, AlertTriangle, Upload, X, Plus, ImageOff, Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { novidadesApi } from "@/api/novidades";
 import { api, getUploadUrl } from "@/lib/axios";
-import { ExpressIcon, MulticaixaIcon, PayPalIcon } from "@/components/payment-icons";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
 
@@ -32,9 +31,6 @@ export function NovidadeDetailPage() {
   const [inscricaoTelefone, setInscricaoTelefone] = useState("");
   const [inscricaoObs, setInscricaoObs] = useState("");
   const [inscricaoSucesso, setInscricaoSucesso] = useState(false);
-  const [metodoPagamento, setMetodoPagamento] = useState("EXPRESS");
-  const [referenciaPagamento, setReferenciaPagamento] = useState("");
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
   const [documentos, setDocumentos] = useState<{ nome: string; file: File | null }[]>([]);
 
   const isDemoToken = Cookies.get("token")?.startsWith("demo.");
@@ -53,9 +49,6 @@ export function NovidadeDetailPage() {
       payload.append("email", inscricaoEmail);
       if (inscricaoTelefone) payload.append("telefone", inscricaoTelefone);
       if (inscricaoObs) payload.append("observacao", inscricaoObs);
-      payload.append("metodoPagamento", metodoPagamento);
-      if (referenciaPagamento) payload.append("referenciaPagamento", referenciaPagamento);
-      if (comprovativo) payload.append("comprovativo", comprovativo);
       documentos.forEach((doc) => {
         if (doc.file) {
           payload.append("docNome", doc.nome);
@@ -325,81 +318,6 @@ export function NovidadeDetailPage() {
                     </div>
                   </div>
 
-                  <div className="mb-4 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                      <CreditCard size={12} />
-                      Pagamento
-                    </h3>
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      {[
-                        { value: "EXPRESS", label: "Express", icon: ExpressIcon },
-                        { value: "TRANSFERENCIA", label: "Transferência", icon: () => <CreditCard className="w-[34px] h-[34px] text-gray-600 dark:text-zinc-400" /> },
-                        { value: "MULTICAIXA", label: "Multicaixa", icon: MulticaixaIcon },
-                        { value: "PAYPAL", label: "PayPal", icon: PayPalIcon },
-                      ].map((method) => (
-                        <button
-                          key={method.value}
-                          type="button"
-                          onClick={() => setMetodoPagamento(method.value)}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                            metodoPagamento === method.value
-                              ? "border-emerald-500 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 shadow-sm"
-                              : "border-gray-200 dark:border-white/[0.08] hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
-                          }`}
-                        >
-                          <method.icon className={`w-[34px] h-[34px] shrink-0 ${metodoPagamento === method.value ? "scale-105" : "opacity-80"}`} />
-                          <span className={`text-[9px] font-bold text-center leading-tight ${
-                            metodoPagamento === method.value
-                              ? "text-gray-900 dark:text-white"
-                              : "text-gray-500 dark:text-zinc-400"
-                          }`}>
-                            {method.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-xl p-3 mb-3">
-                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold mb-1">
-                        Pagamento via {metodoPagamento === "EXPRESS" ? "Express" : metodoPagamento === "TRANSFERENCIA" ? "Transferência Bancária" : metodoPagamento === "MULTICAIXA" ? "Multicaixa" : "PayPal"}
-                      </p>
-                      <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
-                        {metodoPagamento === "EXPRESS"
-                          ? "Faça o pagamento para o número 923 456 789 (Express). Insira a referência após o pagamento."
-                          : metodoPagamento === "TRANSFERENCIA"
-                          ? "IBAN: AO06 0040 0000 1234 5678 9012 3. Envie o comprovativo após a transferência."
-                          : metodoPagamento === "MULTICAIXA"
-                          ? "Pague no Multicaixa com o código 12345. Insira a referência após o pagamento."
-                          : "Será redirecionado para o PayPal para concluir o pagamento."}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600 dark:text-zinc-400">Referência</Label>
-                        <Input
-                          value={referenciaPagamento}
-                          onChange={(e) => setReferenciaPagamento(e.target.value)}
-                          placeholder="Código da transação"
-                          className="h-10 rounded-xl bg-white dark:bg-transparent text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600 dark:text-zinc-400">Comprovativo</Label>
-                        <label className="flex items-center gap-2 h-10 px-3 rounded-xl bg-white dark:bg-transparent border border-dashed border-gray-200 dark:border-white/[0.08] cursor-pointer hover:border-emerald-400 transition-colors">
-                          <Upload size={14} className="text-gray-400 shrink-0" />
-                          <span className="text-xs text-gray-400 truncate">
-                            {comprovativo ? comprovativo.name : "Upload"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            onChange={(e) => setComprovativo(e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
                   {isDemoToken && (
                     <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-xl px-4 py-3 mb-4">
                       <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
@@ -427,9 +345,9 @@ export function NovidadeDetailPage() {
                     {inscricaoMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
-                      <CreditCard className="h-4 w-4 mr-2" />
+                      <Send className="h-4 w-4 mr-2" />
                     )}
-                    {metodoPagamento === "PAYPAL" ? "Pagar com PayPal" : "Pagar e Inscrever-se"}
+                    Inscrever-se
                   </Button>
                 </div>
               )}

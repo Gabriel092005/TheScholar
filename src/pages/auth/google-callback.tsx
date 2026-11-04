@@ -44,7 +44,7 @@ export function GoogleCallback() {
         if (decoded.role === "ADMIN") {
           navigate("/admin", { replace: true });
         } else if (decoded.role === "GESTOR") {
-          navigate("/gestor/dashboard", { replace: true });
+          navigate("/gestor/estatisticas", { replace: true });
         } else {
           navigate("/", { replace: true });
         }

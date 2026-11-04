@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Settings,
   Award,
   GraduationCap,
   Users,
@@ -19,8 +18,8 @@ import {
   Video,
   UserCheck,
   Globe,
-  Sparkles,
   ChevronRight,
+  Settings,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -47,30 +46,31 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
 
   const mainLinks = (isExpanded: boolean) => (
     <>
-      <SidebarLink icon={<LayoutDashboard size={18} />} to="/" active={isActive('/')} label="Home" expanded={isExpanded} />
-      <SidebarLink icon={<Award size={18} />} to="/bolsas" active={isActive('/bolsas')} label="Bolsas de Estudos" expanded={isExpanded} />
-      <SidebarLink icon={<UserCheck size={18} />} to="/entrevista" active={location.pathname.startsWith('/entrevista')} label="Entrevista IA" expanded={isExpanded} />
-      <SidebarLink icon={<Globe size={18} />} to="/proficiencia" active={isActive('/proficiencia')} label="Proficiência EN" expanded={isExpanded} />
-      <SidebarLink icon={<GraduationCap size={18} />} to="/cursos" active={isActive('/cursos')} label="Preparação Pessoal" expanded={isExpanded} />
-      <SidebarLink icon={<History size={18} />} to="/minhas-atividades" active={isActive('/minhas-atividades')} label="Minhas Atividades" expanded={isExpanded} />
-      <SidebarLink icon={<CalendarDays size={18} />} to="/minhas-consultorias" active={isActive('/minhas-consultorias')} label="Agendamentos" expanded={isExpanded} />
-      <SidebarLink icon={<Video size={18} />} to="/aulas" active={isActive('/aulas')} label="Aulas ao Vivo" expanded={isExpanded} />
+      <SidebarLink icon={<LayoutDashboard size={18} />} to="/" active={isActive('/')} label="Home" description="Visão geral da sua jornada" expanded={isExpanded} />
+      <SidebarLink icon={<Award size={18} />} to="/bolsas" active={isActive('/bolsas')} label="Bolsas de Estudos" description="Encontre bolsas compatíveis com você" expanded={isExpanded} />
+      <SidebarLink icon={<UserCheck size={18} />} to="/entrevista" active={location.pathname.startsWith('/entrevista')} label="Entrevista IA" description="Pratique entrevistas com inteligência artificial" expanded={isExpanded} />
+      <SidebarLink icon={<Globe size={18} />} to="/proficiencia" active={isActive('/proficiencia')} label="Proficiência EN" description="Teste e melhore seu inglês" expanded={isExpanded} />
+      <SidebarLink icon={<GraduationCap size={18} />} to="/cursos" active={isActive('/cursos')} label="Preparação Pessoal" description="Cursos para fortalecer seu perfil" expanded={isExpanded} />
+      <SidebarLink icon={<History size={18} />} to="/minhas-atividades" active={isActive('/minhas-atividades')} label="Minhas Atividades" description="Acompanhe seu histórico de atividades" expanded={isExpanded} />
+      <SidebarLink icon={<CalendarDays size={18} />} to="/minhas-consultorias" active={isActive('/minhas-consultorias')} label="Agendamentos" description="Veja e gerencie suas consultorias" expanded={isExpanded} />
+      <SidebarLink icon={<Video size={18} />} to="/aulas" active={isActive('/aulas')} label="Aulas ao Vivo" description="Participe de aulas e mentorias ao vivo" expanded={isExpanded} />
     </>
   );
 
   const communityLinks = (isExpanded: boolean) => (
     <>
-      <SidebarLink icon={<Users size={18} />} to="/comunidades" active={isActive('/comunidades')} label="Comunidades" expanded={isExpanded} />
-      <SidebarLink icon={<BookHeart size={18} />} to="/historias" active={isActive('/historias')} label="Histórias" expanded={isExpanded} />
-      <SidebarLink icon={<MessageCircle size={18} />} to="/depoimentos" active={isActive('/depoimentos')} label="Depoimentos" expanded={isExpanded} />
+      <SidebarLink icon={<Users size={18} />} to="/comunidades" active={isActive('/comunidades')} label="Comunidades" description="Conecte-se com outros estudantes" expanded={isExpanded} />
+      <SidebarLink icon={<BookHeart size={18} />} to="/historias" active={isActive('/historias')} label="Histórias" description="Inspire-se com trajetórias de sucesso" expanded={isExpanded} />
+      <SidebarLink icon={<MessageCircle size={18} />} to="/depoimentos" active={isActive('/depoimentos')} label="Depoimentos" description="Compartilhe e leia experiências" expanded={isExpanded} />
     </>
   );
 
   const toolsLinks = (isExpanded: boolean) => (
     <>
-      <SidebarLink icon={<FileText size={18} />} to="/analise-documento" active={isActive('/analise-documento')} label="Análise de Documentos" expanded={isExpanded} />
-      <SidebarLink icon={<BookOpen size={18} />} to="/perfil-academico" active={isActive('/perfil-academico')} label="Perfil Académico" expanded={isExpanded} />
-      <SidebarLink icon={<Newspaper size={18} />} to="/novidades" active={isActive('/novidades')} label="Destaques" expanded={isExpanded} />
+      <SidebarLink icon={<FileText size={18} />} to="/analise-documento" active={isActive('/analise-documento')} label="Análise de Documentos" description="Envie documentos para análise" expanded={isExpanded} />
+      <SidebarLink icon={<BookOpen size={18} />} to="/perfil-academico" active={isActive('/perfil-academico')} label="Perfil Académico" description="Organize seu currículo e conquistas" expanded={isExpanded} />
+      <SidebarLink icon={<Newspaper size={18} />} to="/novidades" active={isActive('/novidades')} label="Destaques" description="Fique por dentro das novidades" expanded={isExpanded} />
+      <SidebarLink icon={<Settings size={18} />} to="/settings" active={isActive('/settings')} label="Configurações" description="Gerencie a sua conta e preferências" expanded={isExpanded} />
     </>
   );
 
@@ -88,19 +88,26 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
 
   const sidebarContent = (isExpanded: boolean, isMobile: boolean) => (
     <div className="flex flex-col h-full">
-      {/* Logo / Brand */}
-      <div className={`h-14 flex items-center border-b border-gray-100/80 dark:border-white/[0.06] ${isExpanded ? 'px-4 gap-3' : 'justify-center px-2'}`}>
-        <div className="relative shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/10">
-          <GraduationCap size={16} className="text-white" />
-          <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full border-2 border-white dark:border-[#111113]">
-            <Sparkles size={7} className="absolute -top-[1px] -left-[1px] text-white" />
-          </div>
-        </div>
-        {isExpanded && (
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-bold text-gray-900 dark:text-white tracking-tight leading-none">Schoolar</span>
-            <span className="text-[10px] text-gray-400 dark:text-zinc-500 font-medium">Sua jornada académica</span>
-          </div>
+      {/* Expand / collapse control */}
+      <div className={`h-14 flex items-center border-b border-gray-100/80 dark:border-white/[0.06] ${isExpanded ? 'justify-end px-3' : 'justify-center px-2'}`}>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={() => setMobileOpen?.(false)}
+            title="Fechar menu"
+            className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-zinc-300"
+          >
+            <X size={16} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setExpanded(!isExpanded)}
+            title={isExpanded ? "Recolher menu" : "Expandir menu"}
+            className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-zinc-300"
+          >
+            {isExpanded ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          </button>
         )}
       </div>
 
@@ -120,6 +127,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
                   to="/admin"
                   active={location.pathname.startsWith('/admin')}
                   label="Painel Admin"
+                  description="Gerencie a plataforma e usuários"
                   expanded={isExpanded}
                   accentColor="amber"
                 />
@@ -179,11 +187,12 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
   );
 }
 
-function SidebarLink({ icon, to, active, label, expanded, accentColor = 'emerald' }: {
+function SidebarLink({ icon, to, active, label, description, expanded, accentColor = 'emerald' }: {
   icon: React.ReactNode;
   to: string;
   active: boolean;
   label: string;
+  description?: string;
   expanded: boolean;
   accentColor?: 'emerald' | 'amber';
 }) {
@@ -220,12 +229,26 @@ function SidebarLink({ icon, to, active, label, expanded, accentColor = 'emerald
       )}
 
       <span className="shrink-0 transition-transform duration-200 group-hover:scale-105">{icon}</span>
-      {expanded && <span className="truncate">{label}</span>}
+      {expanded && (
+        <span className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate">{label}</span>
+          {description && (
+            <span className={`line-clamp-2 text-[10px] font-normal leading-snug ${active ? 'opacity-70' : 'text-gray-400 dark:text-zinc-500'}`}>
+              {description}
+            </span>
+          )}
+        </span>
+      )}
 
       {/* Tooltip when collapsed */}
       {!expanded && (
-        <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap shadow-xl z-50 flex items-center gap-1.5">
-          {label}
+        <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-xl z-50 flex items-center gap-1.5">
+          <span className="flex flex-col text-left">
+            <span className="whitespace-nowrap">{label}</span>
+            {description && (
+              <span className="whitespace-nowrap text-[10px] font-normal opacity-60">{description}</span>
+            )}
+          </span>
           <ChevronRight size={10} className="opacity-50" />
           <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-1.5 h-1.5 bg-gray-900 dark:bg-gray-100 rotate-45 rounded-[1px]" />
         </div>

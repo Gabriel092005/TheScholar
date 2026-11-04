@@ -800,7 +800,7 @@ export default function MentoriasHub() {
                       </p>
                       {[
                         { icon: Clock,    text: `${selectedCourse.duration} de conteúdo` },
-                        { icon: Globe,    text: "Acesso vitalício"                       },
+                        { icon: Globe,    text: "Acesso durante 1 mês"                   },
                         { icon: Award,    text: "Certificado Profissional"               },
                         { icon: Download, text: "Materiais para download"                },
                       ].map(({ icon: Icon, text }) => (

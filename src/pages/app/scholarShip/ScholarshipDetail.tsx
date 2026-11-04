@@ -1,25 +1,29 @@
-import { useState, useMemo, useEffect } from "react";
+import { useCallback, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, FileText, CheckCircle2, Clock,
-  ShieldCheck, Users, BookOpen, Award, X,
-  Upload, CreditCard, Loader2, Building2,
+  ShieldCheck, Users, BookOpen, X,
+  Upload, CreditCard, Loader2,
   AlertTriangle, Calendar, MapPin, GraduationCap,
-  MessageSquare, Plus, Sparkles, Star, Zap,
-  Heart, Globe, TrendingUp, ChevronRight,
+  MessageSquare, Plus, Zap,
+  Globe, Banknote, Layers, Languages, ExternalLink,
 } from "lucide-react";
-import { ExpressIcon, MulticaixaIcon } from "@/components/payment-icons";
-import { Badge } from "@/components/ui/badge";
+import { differenceInCalendarDays, parseISO } from "date-fns";
+import { Link } from "react-router-dom";
+import { useUser } from "@/api/useGetProfile";
+import { CardAccent, Reveal, iconTile, userCard } from "@/components/user-ui";
+import { EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import type { MetodoPagamento, PagamentoMomenu } from "@/api/pagamentos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { bolsasApi } from "@/api/bolsas";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { api, getUploadUrl } from "@/lib/axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUploadUrl } from "@/lib/axios";
 import Cookies from "js-cookie";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import type { Scholarship } from "./types";
 
 
@@ -34,24 +38,6 @@ interface ScholarshipDetailProps {
   bolsaId?: string;
   autoServico?: TipoInteresse;
 }
-
-type PaymentMethod = "EXPRESS" | "TRANSFERENCIA" | "MULTICAIXA";
-
-const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
-};
-
-const stagger = {
-  animate: { transition: { staggerChildren: 0.08 } }
-};
-
-const scaleIn = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
-};
 
 type TipoInteresse = "CONSULTORIA" | "MENTORIA" | "INSCRICAO";
 
@@ -69,9 +55,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
   const [telefone, setTelefone] = useState("");
   const [observacaoConsultoria, setObservacaoConsultoria] = useState("");
   const [documentos, setDocumentos] = useState<{ nome: string; file: File | null }[]>([]);
-  const [metodoPagamento, setMetodoPagamento] = useState<PaymentMethod>("EXPRESS");
-  const [referenciaPagamento, setReferenciaPagamento] = useState("");
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
+  const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>("momenu-mcx");
+  const [telefonePagamento, setTelefonePagamento] = useState("");
+  const [pagamentoAtivo, setPagamentoAtivo] = useState<PagamentoMomenu | null>(null);
   const [dataSelecionada, setDataSelecionada] = useState<string | null>(null);
   const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null);
 
@@ -83,12 +69,51 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       setShowForm(true);
     }
   }, [autoServico]);
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (!user) return;
+    setNome((atual) => atual || user.nome || "");
+    setEmail((atual) => atual || user.email || "");
+    setTelefone((atual) => atual || user.phone || "");
+  }, [user]);
 
   const { data: slotsDias, isLoading: slotsLoading, isError: slotsError, refetch: refetchSlots } = useQuery({
     queryKey: ["consultoria-slots", bolsaId],
     queryFn: () => bolsasApi.consultoriaSlots(bolsaId!),
     enabled: !!bolsaId && tipoInteresse === "CONSULTORIA" && showForm,
   });
+
+  const queryClient = useQueryClient();
+  const { data: meuEstado } = useQuery({
+    queryKey: ["bolsa-estado", bolsaId],
+    queryFn: () => bolsasApi.meuEstado(bolsaId!),
+    enabled: !!bolsaId && !!user,
+  });
+  const jaInscrito = !!meuEstado?.inscrito;
+  const mentoriaAte = meuEstado?.mentoriaExpiraEm ?? null;
+
+  const atualizarEstado = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["bolsa-estado", bolsaId] });
+    queryClient.invalidateQueries({ queryKey: ["bolsas"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-bolsas"] });
+  }, [queryClient, bolsaId]);
+
+  // Um link direto para o formulário não pode abrir um serviço que a pessoa já tem.
+  useEffect(() => {
+    if ((jaInscrito && tipoInteresse === "INSCRICAO") || (mentoriaAte && tipoInteresse === "MENTORIA")) {
+      setTipoInteresse(null);
+      setShowForm(false);
+    }
+  }, [jaInscrito, mentoriaAte, tipoInteresse]);
+
+  const valorServico =
+    tipoInteresse === "CONSULTORIA"
+      ? CONSULTORIA_PRECO
+      : tipoInteresse === "MENTORIA"
+      ? scholarship.mentoriaPrice
+      : scholarship.inscriptionPrice;
+  const servicoGratuito = valorServico !== undefined && valorServico <= 0;
 
   const inscricao = useMutation({
     mutationFn: async () => {
@@ -103,16 +128,18 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       payload.append("nome", nome);
       payload.append("email", email);
       payload.append("telefone", telefone);
-      if (referenciaPagamento) payload.append("referenciaPagamento", referenciaPagamento);
-      payload.append("metodoPagamento", metodoPagamento);
-      payload.append("observacoes", tipoInteresse === "CONSULTORIA"
-        ? `Interesse: Consultoria - ${observacaoConsultoria}`
-        : `Pagamento via ${metodoPagamento} - Ref: ${referenciaPagamento}`
-      );
+      if (!servicoGratuito) {
+        payload.append("metodoPagamento", metodoPagamento);
+        if (metodoPagamento === "momenu-mcx") {
+          payload.append("phoneNumber", normalizarTelefone(telefonePagamento));
+        }
+      }
+      if (tipoInteresse === "CONSULTORIA") {
+        payload.append("observacoes", `Interesse: Consultoria - ${observacaoConsultoria}`);
+      }
       if (tipoInteresse === "CONSULTORIA" && dataSelecionada && horaSelecionada) {
         payload.append("dataAgendada", `${dataSelecionada}T${horaSelecionada}:00`);
       }
-      if (comprovativo) payload.append("comprovativo", comprovativo);
       documentos.forEach((doc) => {
         if (doc.file) {
           payload.append("docNome", doc.nome);
@@ -120,12 +147,17 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
         }
       });
 
-      await bolsasApi.inscribir(bolsaId, payload);
+      return bolsasApi.inscribir(bolsaId, payload);
     },
-    onSuccess: () => {
-      setInscricaoSuccess(true);
+    onSuccess: (resultado) => {
       setInscricaoError(null);
+      if (resultado.pagamento && resultado.status !== "APROVADA") {
+        setPagamentoAtivo(resultado.pagamento);
+        return;
+      }
+      setInscricaoSuccess(true);
       setShowForm(false);
+      atualizarEstado();
       toast.success(tipoInteresse === "CONSULTORIA" ? "Consultoria agendada com sucesso!" : "Inscrição realizada com sucesso!");
     },
     onError: (err: any) => {
@@ -154,32 +186,74 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
         return;
       }
     }
-    if (!referenciaPagamento.trim()) {
-      toast.error("Informe a referência do pagamento");
+    if (!servicoGratuito && metodoPagamento === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
+      toast.error("Indique um telefone válido com 9 dígitos, a começar por 9.");
       return;
     }
     inscricao.mutate();
   };
 
-  const paymentMethods: { value: PaymentMethod; label: string; icon: React.ElementType; desc: string }[] = [
-    { value: "EXPRESS", label: "Express", icon: ExpressIcon, desc: "Pagamento via Express" },
-    { value: "TRANSFERENCIA", label: "Transferência", icon: Building2, desc: "Transferência bancária" },
-    { value: "MULTICAIXA", label: "Multicaixa", icon: MulticaixaIcon, desc: "Pagamento Multicaixa" },
-  ];
+  const pagamentoConfirmado = useCallback(() => {
+    setInscricaoSuccess(true);
+    atualizarEstado();
+    toast.success("Pagamento confirmado!");
+  }, [atualizarEstado]);
+
+  const fecharEstadoPagamento = (status: PagamentoMomenu["status"]) => {
+    setPagamentoAtivo(null);
+    if (status !== "FALHADO") setShowForm(false);
+  };
 
   const servicosDisponiveis = useMemo(() => {
-    const servicos: { value: TipoInteresse; icon: React.ElementType; titulo: string; preco: string; sub?: string; color: string }[] = [];
+    const servicos: { value: TipoInteresse; icon: React.ElementType; titulo: string; preco: string; sub?: string }[] = [];
+    if (scholarship.inscriptionPrice !== undefined && !jaInscrito) {
+      servicos.push({ value: "INSCRICAO", icon: FileText, titulo: "Inscrição", preco: formatPrice(scholarship.inscriptionPrice, scholarship.currency) });
+    }
     if (scholarship.consultoriaPrice !== undefined) {
-      servicos.push({ value: "CONSULTORIA", icon: MessageSquare, titulo: "Consultoria", preco: formatPrice(CONSULTORIA_PRECO, scholarship.currency), sub: "Sessão de 60 minutos", color: "violet" });
+      servicos.push({ value: "CONSULTORIA", icon: MessageSquare, titulo: "Consultoria", preco: formatPrice(CONSULTORIA_PRECO, scholarship.currency), sub: "Sessão de 60 minutos" });
     }
-    if (scholarship.mentoriaPrice !== undefined) {
-      servicos.push({ value: "MENTORIA", icon: Users, titulo: "Mentoria", preco: formatPrice(scholarship.mentoriaPrice, scholarship.currency), color: "blue" });
-    }
-    if (scholarship.inscriptionPrice !== undefined) {
-      servicos.push({ value: "INSCRICAO", icon: FileText, titulo: "Inscrição", preco: formatPrice(scholarship.inscriptionPrice, scholarship.currency), color: "emerald" });
+    if (scholarship.mentoriaPrice !== undefined && !mentoriaAte) {
+      servicos.push({ value: "MENTORIA", icon: Users, titulo: "Mentoria", preco: formatPrice(scholarship.mentoriaPrice, scholarship.currency) });
     }
     return servicos;
-  }, [scholarship]);
+  }, [scholarship, jaInscrito, mentoriaAte]);
+
+  const abrirFormulario = (tipo?: TipoInteresse) => {
+    if (isDemoToken) {
+      toast.error("Faça login com uma conta real para se inscrever");
+      return;
+    }
+    const escolhido = tipo ?? (servicosDisponiveis.length === 1 ? servicosDisponiveis[0].value : null);
+    if (escolhido) setTipoInteresse(escolhido);
+    setShowForm(true);
+  };
+
+  const prazo = useMemo(() => {
+    if (!scholarship.deadlineISO) return null;
+    const dias = differenceInCalendarDays(parseISO(scholarship.deadlineISO), new Date());
+    if (Number.isNaN(dias)) return null;
+    if (dias < 0) {
+      return { texto: "Prazo encerrado", classe: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400" };
+    }
+    const urgente = "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300";
+    if (dias === 0) return { texto: "Termina hoje", classe: urgente };
+    return {
+      texto: dias === 1 ? "Falta 1 dia" : `Faltam ${dias} dias`,
+      classe: dias <= 14 ? urgente : "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300",
+    };
+  }, [scholarship.deadlineISO]);
+
+  const detalhes = [
+    { icon: Calendar, label: "Prazo", value: scholarship.deadline },
+    { icon: Users, label: "Vagas", value: scholarship.slots > 0 ? String(scholarship.slots) : "" },
+    { icon: Banknote, label: "Valor da bolsa", value: scholarship.valor },
+    { icon: Layers, label: "Modalidade", value: scholarship.modalidade },
+    { icon: Languages, label: "Idioma", value: scholarship.idioma },
+    { icon: Globe, label: "País", value: scholarship.country },
+  ].filter((d): d is { icon: typeof Calendar; label: string; value: string } => Boolean(d.value));
+
+  // Só aceita links http(s): o valor vem do que for escrito no formulário da bolsa.
+  const linkOficial = /^https?:\/\//i.test(scholarship.linkAplicar ?? "") ? scholarship.linkAplicar : null;
 
   const bgImageUrl = scholarship.bgImage
     ? scholarship.bgImage.startsWith("http")
@@ -187,425 +261,259 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       : getUploadUrl(`/uploads/${scholarship.bgImage.replace(/^\//, "")}`)
     : null;
 
-  const tagIcons: Record<string, React.ElementType> = {
-    "GRATUITA": Heart,
-    "INTERNACIONAL": Globe,
-    "EMPREGO": TrendingUp,
-    "CIÊNCIA": Sparkles,
-  };
+  const secao =
+    "rounded-2xl border border-gray-200/70 bg-white p-6 shadow-[0_1px_2px_rgba(16,24,40,0.05)] dark:border-white/[0.07] dark:bg-[#151518] sm:p-7";
 
   return (
-    <div className="min-h-screen bg-[#f4faf7] dark:bg-[#0a0a0c]">
-      {/* ─── HERO ─── */}
-      <div className="relative min-h-[280px] md:min-h-[300px] flex items-end overflow-hidden">
-        {/* Background layers */}
-        <div className="absolute inset-0">
-          {bgImageUrl && (
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
-              style={{ backgroundImage: `url(${bgImageUrl})` }}
-            />
+    <div className="min-h-screen bg-white dark:bg-[#111113]">
+      <div className="container mx-auto max-w-6xl px-6 py-6 sm:py-8">
+        <button
+          onClick={onBack}
+          className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          Voltar às oportunidades
+        </button>
+
+        {/* ─── TÍTULO ─── */}
+        <motion.header
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-8"
+        >
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {scholarship.level && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <GraduationCap className="h-3.5 w-3.5" />
+                {scholarship.level}
+              </span>
+            )}
+            {scholarship.area && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-white/[0.06] dark:text-zinc-300">
+                <BookOpen className="h-3.5 w-3.5" />
+                {scholarship.area}
+              </span>
+            )}
+            {scholarship.slots > 0 && scholarship.slots <= 10 && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                <Zap className="h-3.5 w-3.5" />
+                Vagas limitadas
+              </span>
+            )}
+          </div>
+          <h1 className="max-w-4xl text-2xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white sm:text-3xl lg:text-4xl">
+            {scholarship.title}
+          </h1>
+          {(scholarship.university || scholarship.country) && (
+            <p className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+              <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
+              {[scholarship.university, scholarship.country].filter(Boolean).join(" · ")}
+            </p>
           )}
-          <div className={`absolute inset-0 ${bgImageUrl
-            ? "bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-[#0a0a0c]/30"
-            : "bg-gradient-to-br from-[#053a2e] via-[#0a2e23] to-[#0a0a0c]"
-          }`} />
-          {/* Mesh gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 via-transparent to-teal-600/10" />
-        </div>
+        </motion.header>
 
-        {/* Animated decorative orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-32 -right-32 w-[30rem] h-[30rem] rounded-full bg-emerald-500/[0.07] blur-[100px]"
-          />
-          <motion.div
-            animate={{ y: [0, 12, 0], x: [0, -6, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-40 -left-40 w-[25rem] h-[25rem] rounded-full bg-teal-400/[0.05] blur-[80px]"
-          />
-          {/* Grid pattern */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
-          }} />
-        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          {/* ─── CONTEÚDO ─── */}
+          <div className="min-w-0 space-y-6 lg:col-span-2">
+            {bgImageUrl && (
+              <Reveal className="h-auto">
+                <div className="overflow-hidden rounded-2xl border border-gray-200/70 dark:border-white/[0.07]">
+                  <img
+                    src={bgImageUrl}
+                    alt=""
+                    className="aspect-[16/7] w-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              </Reveal>
+            )}
 
-        <div className="relative w-full">
-          <div className="container mx-auto px-6 pt-8 pb-8 md:pb-10 max-w-6xl">
-            {/* Back button */}
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              onClick={onBack}
-              className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-all mb-5 md:mb-6 text-sm font-medium group backdrop-blur-md bg-white/[0.06] hover:bg-white/[0.1] px-4 py-2 rounded-full border border-white/[0.08] hover:border-white/[0.15]"
-            >
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Voltar às oportunidades
-            </motion.button>
+            {detalhes.length > 0 && (
+              <Reveal className="h-auto">
+                <section aria-label="Detalhes da bolsa" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {detalhes.map(({ icon: Icon, label, value }) => (
+                    <div key={label} className={`${userCard} p-4`}>
+                      <CardAccent />
+                      <Icon className="mb-2 h-4 w-4 text-emerald-500 transition-transform duration-300 group-hover:scale-125" />
+                      <p className="text-xs text-gray-500 dark:text-zinc-400">{label}</p>
+                      <p className="mt-0.5 text-sm font-semibold text-gray-900 dark:text-white">{value}</p>
+                    </div>
+                  ))}
+                </section>
+              </Reveal>
+            )}
 
-            {/* Badges */}
-            <motion.div {...fadeUp} transition={{ delay: 0.15 }} className="flex flex-wrap gap-2.5 mb-4">
-              {scholarship.level && (
-                <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase shadow-lg shadow-emerald-500/30 backdrop-blur-sm">
-                  <GraduationCap size={12} />
-                  {scholarship.level}
-                </span>
-              )}
-              {scholarship.area && (
-                <span className="inline-flex items-center gap-1.5 bg-white/[0.1] text-white/90 border border-white/[0.15] px-4 py-1.5 rounded-full text-[11px] font-medium backdrop-blur-md">
-                  <BookOpen size={11} />
-                  {scholarship.area}
-                </span>
-              )}
-              {scholarship.slots > 0 && scholarship.slots <= 10 && (
-                <span className="inline-flex items-center gap-1.5 bg-amber-500/90 text-white px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-lg shadow-amber-500/30 backdrop-blur-sm">
-                  <Zap size={11} />
-                  Vagas limitadas
-                </span>
-              )}
-            </motion.div>
+            {scholarship.description && (
+              <Reveal className="h-auto">
+                <section className={secao}>
+                  <h2 className="mb-4 flex items-center gap-3 text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
+                    <FileText className="h-5 w-5 text-emerald-500" />
+                    Sobre a bolsa
+                  </h2>
+                  <div
+                    className="prose prose-sm max-w-none leading-relaxed text-gray-600 dark:prose-invert dark:text-zinc-300"
+                    dangerouslySetInnerHTML={{ __html: scholarship.description }}
+                  />
+                </section>
+              </Reveal>
+            )}
 
-            {/* Title */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="text-3xl md:text-4xl lg:text-[2.75rem] font-extrabold text-white leading-[1.1] mb-6 max-w-4xl tracking-tight"
-            >
-              {scholarship.title}
-            </motion.h1>
+            {scholarship.requirements.length > 0 && (
+              <Reveal className="h-auto">
+                <section className={secao}>
+                  <h2 className="mb-4 flex items-center gap-3 text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
+                    <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                    Requisitos
+                  </h2>
+                  <ul className="space-y-3">
+                    {scholarship.requirements.map((req, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm leading-relaxed text-gray-600 dark:text-zinc-300">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </Reveal>
+            )}
 
-            {/* Meta pills */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-wrap items-center gap-3"
-            >
-              {scholarship.university && (
-                <div className="flex items-center gap-2.5 bg-white/[0.08] backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/[0.1] hover:bg-white/[0.12] transition-colors">
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-400/80 to-teal-500/80 flex items-center justify-center">
-                    <GraduationCap className="h-4 w-4 text-white" />
+            {scholarship.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {scholarship.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-white/[0.06] dark:text-zinc-400"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ─── AÇÃO: no telemóvel fica antes do conteúdo, para não obrigar a descer ─── */}
+          <aside className="order-first self-start lg:sticky lg:top-6 lg:order-none">
+            <Reveal className="h-auto">
+              <div className={`${secao} !p-5`}>
+                {prazo && (
+                  <div className={`mb-5 flex items-center gap-3 rounded-xl px-4 py-3 ${prazo.classe}`}>
+                    <Clock className="h-5 w-5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold">{prazo.texto}</p>
+                      <p className="text-xs opacity-80">Prazo: {scholarship.deadline}</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-semibold text-white text-sm">{scholarship.university}</span>
-                    {scholarship.country && (
-                      <span className="text-white/50 text-sm ml-1.5">· {scholarship.country}</span>
+                )}
+
+                {(jaInscrito || mentoriaAte) && (
+                  <div className="mb-5 space-y-2" role="status">
+                    {jaInscrito && (
+                      <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        Já está inscrito nesta bolsa
+                      </p>
+                    )}
+                    {mentoriaAte && (
+                      <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        Mentoria ativa até {new Date(mentoriaAte).toLocaleDateString("pt-PT")}
+                      </p>
                     )}
                   </div>
-                </div>
-              )}
-              {scholarship.deadline && (
-                <div className="flex items-center gap-2 bg-white/[0.08] backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/[0.1]">
-                  <Calendar className="h-4 w-4 text-amber-400" />
-                  <span className="text-white/60 text-sm">Prazo:</span>
-                  <span className="text-white font-semibold text-sm">{scholarship.deadline}</span>
-                </div>
-              )}
-              {scholarship.slots > 0 && (
-                <div className="flex items-center gap-2 bg-white/[0.08] backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/[0.1]">
-                  <Users className="h-4 w-4 text-emerald-400" />
-                  <span className="text-white font-semibold text-sm">{scholarship.slots}</span>
-                  <span className="text-white/50 text-sm">vagas</span>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        </div>
-      </div>
+                )}
 
-      {/* Bottom fade */}
-      <div className="relative -mt-8 h-8 bg-gradient-to-t from-[#f4faf7] dark:from-[#0a0a0c] to-transparent z-10" />
-
-      {/* ─── CONTENT ─── */}
-      <div className="container mx-auto px-6 -mt-4 relative z-10 max-w-6xl pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
-            {scholarship.description && (
-              <motion.section {...fadeUp} transition={{ delay: 0.05 }}
-                className="relative bg-white dark:bg-[#111113] rounded-3xl p-8 md:p-9 border border-gray-200/50 dark:border-white/[0.06] shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                {/* Decorative corner accent */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-50/[0.5] to-transparent dark:from-emerald-500/[0.03] rounded-bl-[80px] pointer-events-none" />
-                <div className="relative">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/80 dark:from-emerald-500/10 dark:to-emerald-500/5 flex items-center justify-center shadow-sm shadow-emerald-500/10">
-                      <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                      Sobre a Bolsa
+                {servicosDisponiveis.length > 0 && (
+                  <div className="mb-5">
+                    <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                      {jaInscrito || mentoriaAte ? "Outros serviços" : "Como podemos ajudar"}
                     </h2>
-                  </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-zinc-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: scholarship.description }} />
-                </div>
-              </motion.section>
-            )}
-
-            {/* Requirements */}
-            {scholarship.requirements.length > 0 && (
-              <motion.section {...fadeUp} transition={{ delay: 0.1 }}
-                className="relative bg-white dark:bg-[#111113] rounded-3xl p-8 md:p-9 border border-gray-200/50 dark:border-white/[0.06] shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-50/[0.5] to-transparent dark:from-emerald-500/[0.03] rounded-tr-[80px] pointer-events-none" />
-                <div className="relative">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/80 dark:from-emerald-500/10 dark:to-emerald-500/5 flex items-center justify-center shadow-sm shadow-emerald-500/10">
-                      <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="space-y-2">
+                      {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco, sub }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          disabled={inscricaoSuccess}
+                          onClick={() => abrirFormulario(value)}
+                          className="group flex w-full items-center gap-3 rounded-xl border border-gray-200/80 p-3 text-left transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-60 dark:border-white/[0.08] dark:hover:border-emerald-500/40 dark:hover:bg-emerald-500/[0.05]"
+                        >
+                          <span className={`${iconTile} !h-9 !w-9`}>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium text-gray-900 dark:text-white">{titulo}</span>
+                            {sub && <span className="block text-xs text-gray-500 dark:text-zinc-400">{sub}</span>}
+                          </span>
+                          <span className={`shrink-0 text-sm font-semibold ${preco === "Grátis" ? "text-emerald-600 dark:text-emerald-400" : "text-gray-900 dark:text-white"}`}>
+                            {preco}
+                          </span>
+                        </button>
+                      ))}
                     </div>
-                    <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                      Requisitos
-                    </h2>
                   </div>
-                  <div className="space-y-3">
-                    {scholarship.requirements.map((req, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.15 + i * 0.05 }}
-                        className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-gray-50/80 dark:bg-white/[0.02] border border-gray-100/80 dark:border-white/[0.04] hover:bg-emerald-50/50 dark:hover:bg-emerald-500/[0.03] transition-colors group"
-                      >
-                        <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-500/15 dark:to-emerald-500/5 flex items-center justify-center shrink-0 mt-0.5 ring-1 ring-emerald-200/50 dark:ring-emerald-500/10 group-hover:ring-emerald-300 dark:group-hover:ring-emerald-500/20 transition-all">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span className="text-gray-600 dark:text-zinc-300 text-[13px] leading-relaxed">{req}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </motion.section>
-            )}
+                )}
 
-            {/* Benefits */}
-            {scholarship.benefits.length > 0 && (
-              <motion.section {...fadeUp} transition={{ delay: 0.15 }}
-                className="relative bg-white dark:bg-[#111113] rounded-3xl p-8 md:p-9 border border-gray-200/50 dark:border-white/[0.06] shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-amber-50/60 to-transparent dark:from-amber-500/[0.03] rounded-br-[80px] pointer-events-none" />
-                <div className="relative">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100/60 dark:from-amber-500/10 dark:to-orange-500/5 flex items-center justify-center shadow-sm shadow-amber-500/10">
-                      <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                      Benefícios
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {scholarship.benefits.map((ben, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + i * 0.05 }}
-                        className="relative flex items-center gap-3.5 bg-gradient-to-br from-amber-50/60 via-emerald-50/30 to-transparent dark:from-white/[0.03] dark:via-white/[0.01] dark:to-transparent rounded-2xl p-4 border border-amber-100/60 dark:border-white/[0.06] hover:border-amber-200 dark:hover:border-white/[0.1] transition-all group"
-                      >
-                        <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shrink-0 shadow-sm shadow-amber-500/30 group-hover:scale-125 transition-transform" />
-                        <span className="text-[13px] text-gray-600 dark:text-zinc-300 font-medium">{ben}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </motion.section>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-6 lg:sticky lg:top-6 self-start">
-            {/* Action Card */}
-            <motion.div {...fadeUp} transition={{ delay: 0.08 }}
-              className="bg-white dark:bg-[#111113] rounded-3xl p-6 border border-gray-200/50 dark:border-white/[0.06] shadow-sm overflow-hidden relative"
-            >
-              {/* Top gradient accent */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400" />
-
-              {/* Deadline */}
-              {scholarship.deadline && (
-                <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50/50 dark:from-amber-500/[0.06] dark:to-orange-500/[0.03] border border-amber-100/80 dark:border-amber-500/10 rounded-2xl px-4 py-3.5 mb-5">
-                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-amber-500/20">
-                    <Clock className="h-4.5 w-4.5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-widest">Prazo limite</p>
-                    <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{scholarship.deadline}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Slots */}
-              {scholarship.slots > 0 && (
-                <div className="flex items-center justify-between mb-5 pb-5 border-b border-gray-100/80 dark:border-white/[0.06]">
-                  <div>
-                    <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Vagas disponíveis</p>
-                    <p className="text-3xl font-extrabold text-gray-900 dark:text-white">{scholarship.slots}</p>
-                  </div>
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/5 flex items-center justify-center shadow-sm">
-                    <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                </div>
-              )}
-
-              {/* Services */}
-              <div className="mb-5 pb-5 border-b border-gray-100/80 dark:border-white/[0.06]">
-                <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-3">Serviços disponíveis</p>
-                <div className="space-y-2.5">
-                  {scholarship.inscriptionPrice !== undefined && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.02] border border-gray-100/60 dark:border-white/[0.04]">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-500/15 dark:to-emerald-500/5 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span className="text-[13px] text-gray-600 dark:text-zinc-400 font-medium">Inscrição</span>
-                      </div>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {scholarship.inscriptionPrice > 0
-                          ? `AOA ${scholarship.inscriptionPrice.toLocaleString()}`
-                          : "Grátis"}
-                      </span>
-                    </div>
-                  )}
-
-                  {scholarship.consultoriaPrice !== undefined && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.02] border border-gray-100/60 dark:border-white/[0.04]">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-500/15 dark:to-violet-500/5 flex items-center justify-center">
-                          <MessageSquare className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                        </div>
-                        <span className="text-[13px] text-gray-600 dark:text-zinc-400 font-medium">
-                          Consultoria
-                          <span className="text-[10px] text-gray-400 dark:text-zinc-600 ml-1">(60 min)</span>
-                        </span>
-                      </div>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        AOA {CONSULTORIA_PRECO.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  {scholarship.mentoriaPrice !== undefined && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.02] border border-gray-100/60 dark:border-white/[0.04]">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-500/15 dark:to-blue-500/5 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <span className="text-[13px] text-gray-600 dark:text-zinc-400 font-medium">Mentoria</span>
-                      </div>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {scholarship.mentoriaPrice > 0
-                          ? `AOA ${scholarship.mentoriaPrice.toLocaleString()}`
-                          : "Grátis"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Tags */}
-              {scholarship.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {scholarship.tags.map((tag) => {
-                    const TagIcon = tagIcons[tag] || Star;
-                    return (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100/80 dark:from-white/[0.04] dark:to-white/[0.02] text-gray-600 dark:text-zinc-400 border border-gray-200/80 dark:border-white/[0.08] hover:border-emerald-300 dark:hover:border-emerald-500/30 transition-colors cursor-default"
-                      >
-                        <TagIcon size={9} className="text-emerald-500" />
-                        {tag}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* CTA Button */}
-              <div className="space-y-3">
                 {inscricaoSuccess ? (
                   <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
+                    initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl py-4 font-bold text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/30"
+                    className="rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-500/10"
                   >
-                    <CheckCircle2 className="h-5 w-5" />
-                    Inscrição Realizada!
+                    <p className="flex items-center justify-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="h-5 w-5" />
+                      Pedido registado com sucesso
+                    </p>
+                    <Link
+                      to="/minhas-atividades"
+                      className="mt-2 inline-block text-xs font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+                    >
+                      Acompanhar em Minhas Atividades
+                    </Link>
                   </motion.div>
-                ) : (
+                ) : jaInscrito || mentoriaAte ? null : servicosDisponiveis.length > 0 ? (
                   <>
                     {isDemoToken && (
-                      <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-500/[0.06] border border-amber-100 dark:border-amber-500/10 rounded-2xl px-4 py-3 mb-3">
-                        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                      <div className="mb-3 flex items-start gap-2.5 rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-500/[0.06]">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                        <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-400">
                           Modo demonstração ativo. Faça login para se inscrever.
                         </p>
                       </div>
                     )}
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        if (isDemoToken) {
-                          toast.error("Faça login com uma conta real para se inscrever");
-                          return;
-                        }
-                        setShowForm(true);
-                      }}
+                    <button
+                      onClick={() => abrirFormulario()}
                       disabled={!bolsaId}
-                      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 rounded-2xl py-4 font-bold text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all duration-200 hover:bg-emerald-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-[#151518]"
                     >
-                      {isDemoToken ? "Faça Login Primeiro" : "Inscrever-se Agora"}
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </motion.button>
+                      {isDemoToken ? "Faça login primeiro" : "Inscrever-se agora"}
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </button>
                     {inscricaoError && !showForm && (
-                      <p className="text-xs text-red-500 text-center">{inscricaoError}</p>
+                      <p className="mt-2 text-center text-xs text-red-500">{inscricaoError}</p>
                     )}
                   </>
+                ) : (
+                  <p className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500 dark:bg-white/[0.03] dark:text-zinc-400">
+                    Os serviços desta bolsa ainda não estão disponíveis.
+                  </p>
+                )}
+
+                {linkOficial && (
+                  <a
+                    href={linkOficial}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-white/[0.08] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Ver página oficial da bolsa
+                  </a>
                 )}
               </div>
-            </motion.div>
-
-            {/* Institution Card */}
-            {(scholarship.university || scholarship.country || scholarship.level) && (
-              <motion.div {...fadeUp} transition={{ delay: 0.12 }}
-                className="relative rounded-3xl overflow-hidden shadow-sm"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#053a2e] via-[#0a4535] to-[#0d523f] dark:from-emerald-900/80 dark:via-[#0a3a2e] dark:to-gray-900" />
-                <div className="absolute inset-0 opacity-30" style={{
-                  backgroundImage: `radial-gradient(circle at 20% 80%, rgba(16,185,129,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(20,184,166,0.2) 0%, transparent 50%)`
-                }} />
-                <div className="relative p-6 text-white">
-                  {scholarship.university && (
-                    <div className="flex items-center gap-3.5 mb-4">
-                      <div className="h-12 w-12 rounded-2xl bg-white/[0.1] backdrop-blur-sm flex items-center justify-center border border-white/[0.1]">
-                        <GraduationCap className="h-6 w-6 text-emerald-300" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-emerald-300/70 font-bold uppercase tracking-widest mb-0.5">Instituição</p>
-                        <p className="font-bold text-sm leading-snug">{scholarship.university}</p>
-                      </div>
-                    </div>
-                  )}
-                  {scholarship.country && (
-                    <div className="flex items-center gap-2 text-emerald-200/70 text-xs bg-white/[0.05] rounded-xl px-3 py-2 border border-white/[0.06] mb-3">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{scholarship.country}</span>
-                    </div>
-                  )}
-                  {scholarship.level && (
-                    <div className="flex items-center gap-2 text-emerald-200/70 text-xs bg-white/[0.05] rounded-xl px-3 py-2 border border-white/[0.06]">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      <span>Nível: <span className="text-white font-semibold">{scholarship.level}</span></span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </div>
+            </Reveal>
+          </aside>
         </div>
       </div>
 
@@ -625,6 +533,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="absolute right-0 top-0 h-full w-full max-w-xl bg-white dark:bg-[#111113] shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Formulário de inscrição"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col h-full">
@@ -636,22 +547,12 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   </div>
                   <button
                     onClick={() => setShowForm(false)}
+                    aria-label="Fechar"
                     className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
                   >
                     <X size={18} className="text-gray-500 dark:text-zinc-500" />
                   </button>
                 </div>
-
-                {scholarship.bgImage && (
-                  <div className="h-36 shrink-0 relative overflow-hidden">
-                    <img
-                      src={scholarship.bgImage}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111113] via-[#111113]/30 to-transparent" />
-                  </div>
-                )}
 
                 <ScrollArea className="flex-1 px-6 py-6">
                   <div className="space-y-7">
@@ -667,7 +568,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3">
-                        {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco, sub, color }) => (
+                        {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco, sub }) => (
                           <button
                             key={value}
                             type="button"
@@ -977,64 +878,16 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                       </div>
                     )}
 
-                    <div className="grid grid-cols-3 gap-2.5 mb-4">
-                      {paymentMethods.map((method) => (
-                        <button
-                          key={method.value}
-                          type="button"
-                          onClick={() => setMetodoPagamento(method.value)}
-                          className={`flex flex-col items-center gap-2 p-3.5 rounded-2xl border-2 transition-all ${
-                            metodoPagamento === method.value
-                              ? "border-emerald-500 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 shadow-md shadow-emerald-500/10"
-                              : "border-gray-200/80 dark:border-white/[0.08] hover:border-emerald-500/40 dark:hover:border-emerald-500/40"
-                          }`}
-                        >
-                          <method.icon
-                            className={`w-[34px] h-[34px] shrink-0 ${
-                              metodoPagamento === method.value ? "scale-105" : "opacity-80"
-                            }`}
-                          />
-                          <span className={`text-[9px] font-bold text-center leading-tight ${
-                            metodoPagamento === method.value
-                              ? "text-gray-900 dark:text-white"
-                              : "text-gray-500 dark:text-zinc-400"
-                          }`}>
-                            {method.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="bg-amber-50 dark:bg-amber-500/[0.06] border border-amber-100/80 dark:border-amber-500/10 rounded-2xl p-4 mb-4">
-                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold mb-1">
-                        Pagamento via {metodoPagamento === "EXPRESS" ? "Express" : metodoPagamento === "TRANSFERENCIA" ? "Transferência Bancária" : "Multicaixa"}
-                      </p>
-                      <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
-                        {metodoPagamento === "EXPRESS"
-                          ? "Faça o pagamento para o número 923 456 789 (Express). Após o pagamento, insira a referência abaixo."
-                          : metodoPagamento === "TRANSFERENCIA"
-                          ? "IBAN: AO06 0040 0000 1234 5678 9012 3. Envie o comprovativo após a transferência."
-                          : "Pague no Multicaixa com o código 12345. Insira a referência após o pagamento."}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600 dark:text-zinc-400">Referência *</Label>
-                        <Input
-                          value={referenciaPagamento}
-                          onChange={(e) => setReferenciaPagamento(e.target.value)}
-                          placeholder="Código da transação"
-                          className="h-11 rounded-xl bg-gray-50 dark:bg-white/[0.04] border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600"
-                        />
-                      </div>
-                      <FileUpload
-                        label="Comprovativo (opcional)"
-                        file={comprovativo}
-                        onChange={setComprovativo}
-                        accept="image/*,.pdf"
+                    {servicoGratuito ? (
+                      <p className="text-xs text-gray-500 dark:text-zinc-400">Este serviço é gratuito.</p>
+                    ) : (
+                      <SeletorPagamento
+                        metodo={metodoPagamento}
+                        onMetodo={setMetodoPagamento}
+                        telefone={telefonePagamento}
+                        onTelefone={setTelefonePagamento}
                       />
-                    </div>
+                    )}
                   </section>
                   )}
                 </div>
@@ -1053,19 +906,24 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   <Button
                     variant="outline"
                     onClick={() => setShowForm(false)}
-                    className="rounded-xl border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 h-11"
+                    className="rounded-xl border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white h-11"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleInscrever}
-                    disabled={inscricao.isPending}
+                    disabled={inscricao.isPending || !tipoInteresse}
                     className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-6 h-11 shadow-lg shadow-emerald-600/25"
                   >
                     {inscricao.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Processando...
+                      </>
+                    ) : tipoInteresse && !servicoGratuito && metodoPagamento === "reference" ? (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Gerar referência
                       </>
                     ) : tipoInteresse === "CONSULTORIA" ? (
                       <>
@@ -1076,6 +934,11 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                       <>
                         <Users className="h-4 w-4 mr-2" />
                         Solicitar Mentoria
+                      </>
+                    ) : servicoGratuito ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Confirmar inscrição
                       </>
                     ) : (
                       <>
@@ -1091,46 +954,19 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
         )}
       </AnimatePresence>
 
-    </div>
-  );
-}
+      {pagamentoAtivo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Pagamento</h3>
+            <EstadoPagamento
+              pagamento={pagamentoAtivo}
+              onConfirmado={pagamentoConfirmado}
+              onFechar={fecharEstadoPagamento}
+            />
+          </div>
+        </div>
+      )}
 
-function FileUpload({
-  label,
-  file,
-  onChange,
-  accept,
-}: {
-  label: string;
-  file: File | null;
-  onChange: (f: File | null) => void;
-  accept: string;
-}) {
-  const [, setPreview] = useState<string | null>(null);
-
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs text-gray-600 dark:text-zinc-400">{label}</Label>
-      <label className="flex items-center gap-2.5 h-11 px-4 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-dashed border-gray-200 dark:border-white/[0.08] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors group">
-        <Upload size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-        <span className="text-xs text-gray-400 dark:text-zinc-500 truncate flex-1">
-          {file ? file.name : "Carregar ficheiro"}
-        </span>
-        {file && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onChange(null);
-              setPreview(null);
-            }}
-            className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-colors"
-          >
-            <X size={12} className="text-gray-500" />
-          </button>
-        )}
-        <input type="file" accept={accept} onChange={(e) => onChange(e.target.files?.[0] || null)} className="hidden" />
-      </label>
     </div>
   );
 }

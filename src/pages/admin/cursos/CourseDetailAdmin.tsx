@@ -1,54 +1,33 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   ChevronLeft, PlayCircle, Video, FileText, Clock, Users,
-  GraduationCap, Globe, Eye, Youtube, Hash, Loader2, Plus, Trash2, X,
-  Upload, Monitor,
+  GraduationCap, Globe, Eye, Youtube, Hash, Loader2, Plus, Trash2,
+  Monitor, Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { cursosApi, type Aula } from "@/api/cursos";
-import { api, getUploadUrl } from "@/lib/axios";
+import { getUploadUrl } from "@/lib/axios";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { NovaAulaDialog } from "./NovaAulaDialog";
 
 function isYoutubeUrl(url?: string) {
   if (!url) return false;
   return url.includes("youtube.com") || url.includes("youtu.be");
 }
 
-interface NewAulaForm {
-  titulo: string;
-  tipo: "VIDEO" | "PDF" | "QUIZ";
-  duracao: string;
-  gratuito: boolean;
-  videoSource: "youtube" | "local";
-  videoUrl: string;
-  videoLocal: string;
-  pdfUrl: string;
-}
-
-const emptyAulaForm: NewAulaForm = {
-  titulo: "", tipo: "VIDEO", duracao: "10:00",
-  gratuito: false, videoSource: "youtube", videoUrl: "", videoLocal: "", pdfUrl: "",
-};
-
-export function CourseDetailAdmin() {
+export function CourseDetailAdmin({ basePath = "/admin/cursos" }: { basePath?: string } = {}) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [novaAula, setNovaAula] = useState<NewAulaForm>(emptyAulaForm);
   const [previewAula, setPreviewAula] = useState<Aula | null>(null);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
@@ -58,67 +37,18 @@ export function CourseDetailAdmin() {
     enabled: !!id,
   });
 
-  const addAulaMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof cursosApi.addAula>[1]) =>
-      cursosApi.addAula(id!, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-curso", id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-cursos"] });
-      toast.success("Aula adicionada com sucesso!");
-      setDialogOpen(false);
-      setNovaAula(emptyAulaForm);
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Erro ao adicionar aula");
-    },
-  });
-
   const removeAulaMutation = useMutation({
     mutationFn: (aulaId: string) => cursosApi.removeAula(id!, aulaId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-curso", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-cursos"] });
+      queryClient.invalidateQueries({ queryKey: ["gestor-cursos"] });
       toast.success("Aula removida com sucesso!");
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Erro ao remover aula");
     },
   });
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleUploadLocalVideo = async (file: File) => {
-    try {
-      setUploading(true);
-      const form = new FormData();
-      form.append("file", file);
-      const { data } = await api.post("/upload", form);
-      const path = data.url || data.path || "";
-      setNovaAula({ ...novaAula, videoLocal: path });
-      toast.success("Vídeo carregado com sucesso!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erro ao carregar vídeo");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleAddAula = () => {
-    if (!novaAula.titulo.trim()) {
-      toast.error("O título da aula é obrigatório");
-      return;
-    }
-    addAulaMutation.mutate({
-      titulo: novaAula.titulo,
-      tipo: novaAula.tipo,
-      duracao: novaAula.duracao || undefined,
-      gratuito: novaAula.gratuito,
-      videoUrl: novaAula.tipo === "VIDEO" && novaAula.videoSource === "youtube" ? novaAula.videoUrl || undefined : undefined,
-      videoLocal: novaAula.tipo === "VIDEO" && novaAula.videoSource === "local" ? novaAula.videoLocal || undefined : undefined,
-      pdfUrl: novaAula.tipo === "PDF" ? novaAula.pdfUrl || undefined : undefined,
-    });
-  };
 
   if (isLoading) {
     return (
@@ -129,7 +59,7 @@ export function CourseDetailAdmin() {
   }
 
   if (!curso) {
-    return <Navigate to="/admin/cursos" replace />;
+    return <Navigate to={basePath} replace />;
   }
 
   const aulas = curso.aulas || [];
@@ -142,7 +72,7 @@ export function CourseDetailAdmin() {
     >
       <Button
         variant="ghost"
-        onClick={() => navigate("/admin/cursos")}
+        onClick={() => navigate(basePath)}
         className="mb-6 text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
       >
         <ChevronLeft size={18} className="mr-1" />
@@ -175,9 +105,6 @@ export function CourseDetailAdmin() {
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{curso.preco.toLocaleString()} Kz</p>
-              {curso.precoOriginal && curso.precoOriginal > curso.preco && (
-                <p className="text-sm text-gray-400 dark:text-zinc-600 line-through">{curso.precoOriginal.toLocaleString()} Kz</p>
-              )}
             </div>
           </div>
 
@@ -210,7 +137,18 @@ export function CourseDetailAdmin() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-gray-50 dark:bg-white/[0.06] rounded-xl p-4">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Bolsa vinculada</h3>
+              {curso.bolsa ? (
+                <p className="flex items-center gap-1.5 text-gray-600 dark:text-zinc-400">
+                  <Award size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span className="truncate">{curso.bolsa.titulo}</span>
+                </p>
+              ) : (
+                <p className="text-gray-400 dark:text-zinc-600">Curso independente</p>
+              )}
+            </div>
             <div className="bg-gray-50 dark:bg-white/[0.06] rounded-xl p-4">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Categoria</h3>
               <p className="text-gray-600 dark:text-zinc-400">{curso.categoria}</p>
@@ -255,184 +193,10 @@ export function CourseDetailAdmin() {
             <PlayCircle size={20} />
             Aulas do Curso ({aulas.length})
           </h2>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                <Plus size={14} className="mr-1" />Adicionar Aula
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Nova Aula</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div>
-                  <Label className="text-gray-700 dark:text-zinc-300">Título da Aula</Label>
-                  <Input
-                    value={novaAula.titulo}
-                    onChange={(e) => setNovaAula({ ...novaAula, titulo: e.target.value })}
-                    placeholder="Ex: Introdução às Finanças"
-                    className="mt-1.5"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Tipo</Label>
-                    <Select
-                      value={novaAula.tipo}
-                      onValueChange={(v) => setNovaAula({ ...novaAula, tipo: v as NewAulaForm["tipo"] })}
-                    >
-                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="VIDEO">Vídeo</SelectItem>
-                        <SelectItem value="PDF">PDF</SelectItem>
-                        <SelectItem value="QUIZ">Quiz</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">Duração</Label>
-                    <Input
-                      value={novaAula.duracao}
-                      onChange={(e) => setNovaAula({ ...novaAula, duracao: e.target.value })}
-                      placeholder="10:00"
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-                {novaAula.tipo === "VIDEO" && (
-                  <>
-                    <div>
-                      <Label className="text-gray-700 dark:text-zinc-300">Origem do Vídeo</Label>
-                      <div className="flex gap-2 mt-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setNovaAula({ ...novaAula, videoSource: "youtube", videoLocal: "" })}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-                            novaAula.videoSource === "youtube"
-                              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 hover:border-gray-300"
-                          }`}
-                        >
-                          <Youtube size={14} />
-                          YouTube
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNovaAula({ ...novaAula, videoSource: "local", videoUrl: "" })}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-                            novaAula.videoSource === "local"
-                              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 hover:border-gray-300"
-                          }`}
-                        >
-                          <Monitor size={14} />
-                          Vídeo Local
-                        </button>
-                      </div>
-                    </div>
-
-                    {novaAula.videoSource === "youtube" && (
-                      <div>
-                        <Label className="text-gray-700 dark:text-zinc-300">URL do Vídeo (YouTube)</Label>
-                        <Input
-                          value={novaAula.videoUrl}
-                          onChange={(e) => setNovaAula({ ...novaAula, videoUrl: e.target.value })}
-                          placeholder="https://youtube.com/watch?v=..."
-                          className="mt-1.5"
-                        />
-                      </div>
-                    )}
-
-                    {novaAula.videoSource === "local" && (
-                      <div>
-                        <Label className="text-gray-700 dark:text-zinc-300">Vídeo do Sistema</Label>
-                        {novaAula.videoLocal ? (
-                          <div className="mt-1.5 flex items-center gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30">
-                            <Monitor size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span className="text-xs text-emerald-700 dark:text-emerald-300 truncate flex-1">
-                              {novaAula.videoLocal.split("/").pop() || novaAula.videoLocal}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setNovaAula({ ...novaAula, videoLocal: "" })}
-                              className="p-1 hover:bg-emerald-200 dark:hover:bg-emerald-500/20 rounded"
-                            >
-                              <X size={12} className="text-emerald-600 dark:text-emerald-400" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="mt-1.5">
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="video/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleUploadLocalVideo(file);
-                              }}
-                              className="hidden"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={uploading}
-                              className="w-full flex items-center justify-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-zinc-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all disabled:opacity-50"
-                            >
-                              {uploading ? (
-                                <Loader2 size={16} className="animate-spin" />
-                              ) : (
-                                <Upload size={16} />
-                              )}
-                              <span className="text-sm font-medium">
-                                {uploading ? "A carregar..." : "Carregar vídeo do computador"}
-                              </span>
-                            </button>
-                            <p className="text-[10px] text-gray-400 dark:text-zinc-600 mt-1">
-                              Formatos suportados: MP4, WebM, AVI
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-                {novaAula.tipo === "PDF" && (
-                  <div>
-                    <Label className="text-gray-700 dark:text-zinc-300">URL do PDF</Label>
-                    <Input
-                      value={novaAula.pdfUrl}
-                      onChange={(e) => setNovaAula({ ...novaAula, pdfUrl: e.target.value })}
-                      placeholder="URL do arquivo PDF..."
-                      className="mt-1.5"
-                    />
-                  </div>
-                )}
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300 cursor-pointer pt-2">
-                  <input
-                    type="checkbox"
-                    checked={novaAula.gratuito}
-                    onChange={(e) => setNovaAula({ ...novaAula, gratuito: e.target.checked })}
-                    className="rounded border-gray-300 dark:border-zinc-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                  Aula gratuita (disponível sem compra)
-                </label>
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button className="bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={() => { setDialogOpen(false); setNovaAula(emptyAulaForm); }}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                    onClick={handleAddAula}
-                    disabled={addAulaMutation.isPending}
-                  >
-                    {addAulaMutation.isPending ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Plus size={14} className="mr-1" />}
-                    Adicionar
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setDialogOpen(true)}>
+            <Plus size={14} className="mr-1" />Adicionar Aula
+          </Button>
+          <NovaAulaDialog cursoId={id!} totalAulas={aulas.length} open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
 
         {aulas.length === 0 ? (
@@ -517,7 +281,7 @@ export function CourseDetailAdmin() {
                       }
                     }}
                     disabled={removeAulaMutation.isPending}
-                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity disabled:opacity-50"
                   >
                     {removeAulaMutation.isPending ? (
                       <Loader2 size={14} className="animate-spin text-red-400" />

@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import type { MetodoPagamento, PagamentoMomenu } from "./pagamentos";
 
 export interface Curso {
   id: string;
@@ -11,7 +12,6 @@ export interface Curso {
   estudantes: number;
   rating: number;
   preco: number;
-  precoOriginal?: number;
   idioma?: string;
   tags: string[];
   descricao?: string;
@@ -19,6 +19,8 @@ export interface Curso {
   status: "RASCUNHO" | "PUBLICADO";
   mentorNome?: string;
   mentorAvatar?: string;
+  bolsaId?: string | null;
+  bolsa?: { id: string; titulo: string } | null;
   created_at: string;
   updated_at: string;
   aulas?: Aula[];
@@ -56,6 +58,23 @@ export interface CursoPagamento {
     email: string;
     image_path?: string;
   };
+}
+
+export interface MeuPagamento {
+  id: string;
+  tipo: "CURSO" | "BOLSA" | "MENTORIA" | "DOCUMENTO";
+  titulo: string;
+  servico: string;
+  link: string | null;
+  valor: number;
+  metodo?: string | null;
+  status: string;
+  created_at: string;
+  entity: string | null;
+  referenceNumber: string | null;
+  dueDate: string | null;
+  invoiceUrl: string | null;
+  falhaMotivo: string | null;
 }
 
 export const cursosApi = {
@@ -99,8 +118,8 @@ export const cursosApi = {
     return data;
   },
 
-  aderir: async (id: string, payload?: { metodo?: string; referencia?: string; comprovativo?: string }) => {
-    const { data } = await api.post<{ id: string; status: string; message: string }>(`/cursos/${id}/aderir`, payload);
+  aderir: async (id: string, payload?: { metodo?: MetodoPagamento; phoneNumber?: string }) => {
+    const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/cursos/${id}/aderir`, payload);
     return data;
   },
 
@@ -110,7 +129,7 @@ export const cursosApi = {
   },
 
   listMeusPagamentos: async () => {
-    const { data } = await api.get<CursoPagamento[]>("/meus-pagamentos");
+    const { data } = await api.get<MeuPagamento[]>("/meus-pagamentos");
     return data;
   },
 

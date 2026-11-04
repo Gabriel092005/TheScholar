@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
-import { History, LogOut, User } from "lucide-react";
+import { History, LayoutDashboard, LogOut, User } from "lucide-react";
 import { getProfile } from "@/api/get-profile";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -98,6 +98,18 @@ export function AccountMenu() {
                 Minhas Atividades
               </a>
             </DropdownMenuItem>
+
+            {(profile?.role === "ADMIN" || profile?.role === "GESTOR") && (
+              <DropdownMenuItem asChild>
+                <a
+                  href="/gestor/estatisticas"
+                  className="flex items-center gap-3 p-2.5 text-sm rounded-lg cursor-pointer font-medium text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 transition-colors"
+                >
+                  <LayoutDashboard size={16} />
+                  Painel do Gestor
+                </a>
+              </DropdownMenuItem>
+            )}
           </div>
 
           <DropdownMenuSeparator className="my-2" />

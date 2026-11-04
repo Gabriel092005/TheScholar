@@ -163,7 +163,8 @@ export function ComunidadeChatPage() {
       typingTimeoutsRef.current.clear();
       socket.emit("sair_comunidade", id);
     };
-  }, [id, user, queryClient]);
+    // A API só aceita membros na sala: é preciso voltar a entrar quando a pessoa passa a sê-lo.
+  }, [id, user, queryClient, comunidade?.souMembro]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -243,17 +244,17 @@ export function ComunidadeChatPage() {
       queryClient.invalidateQueries({ queryKey: ["comunidades"] });
       toast.success(acao === "APROVAR" ? "Solicitação aprovada!" : "Solicitação rejeitada.");
     },
-    onError: () => toast.error("Erro ao responder solicitação"),
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Erro ao responder solicitação"),
   });
 
   const entrarMutation = useMutation({
     mutationFn: () => entrarComunidade(id!),
-    onSuccess: () => {
+    onSuccess: (mensagem) => {
       queryClient.invalidateQueries({ queryKey: ["comunidade", id] });
       queryClient.invalidateQueries({ queryKey: ["mensagens", id] });
-      toast.success("Entrou na comunidade!");
+      toast.success(mensagem);
     },
-    onError: () => toast.error("Erro ao entrar na comunidade"),
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Erro ao entrar na comunidade"),
   });
 
   const sairMutation = useMutation({
@@ -633,7 +634,8 @@ export function ComunidadeChatPage() {
                             <button
                               onClick={() => deleteMsgMutation.mutate(msg.id)}
                               disabled={deleteMsgMutation.isPending}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-gray-400 hover:text-red-500"
+                              aria-label="Remover mensagem"
+                              className="[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-gray-400 hover:text-red-500"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -898,7 +900,7 @@ export function ComunidadeChatPage() {
                     size="sm"
                     onClick={() => convidarMutation.mutate(u.id)}
                     disabled={convidarMutation.isPending}
-                    className="h-8 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    className="h-8 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0"
                   >
                     <UserPlus className="h-3.5 w-3.5 mr-1" />
                     Adicionar
@@ -953,7 +955,8 @@ export function ComunidadeChatPage() {
                     <button
                       onClick={() => removerMembroMutation.mutate(m.id)}
                       disabled={removerMembroMutation.isPending}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 shrink-0"
+                      aria-label="Remover membro"
+                      className="[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 shrink-0"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1360,7 +1363,7 @@ function DuvidasPanel({
                           onClick={() => onResponderDuvida(duvida.id)}
                           variant="ghost"
                           size="sm"
-                          className="rounded-xl text-xs"
+                          className="rounded-xl text-xs dark:text-white"
                         >
                           Cancelar
                         </Button>

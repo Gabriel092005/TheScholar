@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { analiseDocumentoApi, type AnaliseDocumento } from "@/api/analise-documento";
 import { api, getUploadUrl } from "@/lib/axios";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
 import toast from "react-hot-toast";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
@@ -98,10 +99,10 @@ export function AnaliseDocumentoAdmin() {
           </Select>
         </div>
 
-        <ScrollArea className="w-full whitespace-nowrap">
-          <table className="w-full">
+        <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+          <table className={fragmentedTable}>
             <thead>
-              <tr className="border-b border-gray-100 dark:border-white/[0.06]">
+              <tr>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Utilizador</th>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Documento</th>
                 <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Área Pretendida</th>
@@ -112,12 +113,12 @@ export function AnaliseDocumentoAdmin() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" /></td></tr>
+                <tr className={fragmentedRow}><td colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-500 dark:text-zinc-500">Nenhum pedido encontrado</td></tr>
+                <tr className={fragmentedRow}><td colSpan={6} className="text-center py-12 text-gray-500 dark:text-zinc-500">Nenhum pedido encontrado</td></tr>
               ) : (
                 filtered.map((a) => (
-                  <tr key={a.id} className="border-b border-gray-50 dark:border-white/[0.05] hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                  <tr key={a.id} className={fragmentedRow}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
@@ -156,7 +157,7 @@ export function AnaliseDocumentoAdmin() {
                             href={getUploadUrl(`/uploads/${a.arquivoUrl}`)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white"
                           >
                             <ExternalLink size={14} /> Ver
                           </a>
@@ -166,7 +167,7 @@ export function AnaliseDocumentoAdmin() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-xs h-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                              className="h-8 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
                               onClick={() => openDialog(a)}
                             >
                               <MessageSquare size={14} className="mr-1" /> Analisar

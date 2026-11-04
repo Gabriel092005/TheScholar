@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import type { PagamentoMomenu } from "./pagamentos";
 
 export interface Bolsa {
   id: string;
@@ -72,7 +73,8 @@ export const bolsasApi = {
     return data.data;
   },
 
-  list: async (params?: { search?: string; categoria?: string; nivel?: string; status?: string; page?: number; limit?: number }) => {
+  /** Com `ocultarMinhas`, tira as bolsas em que o utilizador já está inscrito ou tem mentoria ativa. */
+  list: async (params?: { search?: string; categoria?: string; nivel?: string; status?: string; page?: number; limit?: number; ocultarMinhas?: boolean }) => {
     const { data } = await api.get<{ data: Bolsa[]; meta: any }>("/bolsas", { params });
     return data;
   },
@@ -104,9 +106,14 @@ export const bolsasApi = {
   },
 
   inscribir: async (id: string, payload: FormData) => {
-    const { data } = await api.post<{ id: string; message: string }>(`/bolsas/${id}/inscrever`, payload, {
+    const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/bolsas/${id}/inscrever`, payload, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    return data;
+  },
+
+  meuEstado: async (id: string) => {
+    const { data } = await api.get<{ inscrito: boolean; mentoriaExpiraEm: string | null }>(`/bolsas/${id}/meu-estado`);
     return data;
   },
 

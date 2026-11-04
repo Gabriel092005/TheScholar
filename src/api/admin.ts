@@ -57,9 +57,36 @@ export interface AulaOnlineAdmin {
   _count: { participantes: number };
 }
 
+export interface ReceitaGestor {
+  id: string;
+  nome: string;
+  email: string;
+  image_path: string | null;
+  total: number;
+  mes: number;
+  pagamentos: number;
+  bolsas: number;
+  cursos: number;
+  documentos: number;
+}
+
+export interface ReceitaGestores {
+  total: number;
+  mes: number;
+  pagamentos: number;
+  totalGestores: number;
+  gestores: ReceitaGestor[];
+  semGestor: { total: number; mes: number; pagamentos: number };
+}
+
 export const adminApi = {
   getDashboard: async () => {
     const { data } = await api.get<DashboardData>("/admin/dashboard");
+    return data;
+  },
+
+  getReceitaGestores: async () => {
+    const { data } = await api.get<ReceitaGestores>("/admin/receita-gestores");
     return data;
   },
 

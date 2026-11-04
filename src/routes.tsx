@@ -30,6 +30,7 @@ import { EntrevistaPage } from './pages/app/entrevista/EntrevistaPage';
 import { ProficienciaPage } from './pages/app/proficiencia/ProficienciaPage';
 import { AulasOnlinePage } from './pages/app/aulas/index';
 import { AulaOnlineRoomPage } from './pages/app/aulas/[id]';
+import { DocumentosPage } from './pages/app/documentos';
 
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { BolsasAdmin } from './pages/admin/bolsas/BolsasAdmin';
@@ -43,12 +44,22 @@ import { EstatisticasAdmin } from './pages/admin/estatisticas/EstatisticasAdmin'
 import { NovidadesAdmin } from './pages/admin/novidades/NovidadesAdmin';
 import { ComunidadesAdmin } from './pages/admin/comunidades/ComunidadesAdmin';
 import { UsuariosAdmin } from './pages/admin/usuarios/UsuariosAdmin';
+import { GestoresAdmin } from './pages/admin/gestores/GestoresAdmin';
 import { DepoimentosAdmin } from './pages/admin/depoimentos/DepoimentosAdmin';
 import { AnaliseDocumentoAdmin } from './pages/admin/analise-documento/AnaliseDocumentoAdmin';
 import { AulasOnlineAdmin } from './pages/admin/aulas-online/AulasOnlineAdmin';
 import { HomeBannersAdmin } from './pages/admin/banners/HomeBannersAdmin';
 import { MapaGlobalAdmin } from './pages/admin/mapa-global/MapaGlobalAdmin';
 import { AtividadesAdmin } from './pages/admin/atividades/AtividadesAdmin';
+
+import { GestorLayout } from './pages/gestor/GestorLayout';
+import { GestorEstatisticas } from './pages/gestor/GestorEstatisticas';
+import { GestorBolsas } from './pages/gestor/GestorBolsas';
+import { GestorCursos } from './pages/gestor/GestorCursos';
+import { GestorDocumentos } from './pages/gestor/GestorDocumentos';
+import { GestorComunidades } from './pages/gestor/GestorComunidades';
+import { GestorAulas } from './pages/gestor/GestorAulas';
+import { GestorPerfil } from './pages/gestor/GestorPerfil';
 
 
 export const router = createBrowserRouter([
@@ -79,6 +90,7 @@ export const router = createBrowserRouter([
       { path: 'perfil-academico',              element: <PerfilAcademicoPage /> },
       { path: 'aulas',                         element: <AulasOnlinePage /> },
       { path: 'aulas/:id',                     element: <AulaOnlineRoomPage /> },
+      { path: 'documentos',                    element: <DocumentosPage /> },
 
     ],
   },
@@ -111,12 +123,31 @@ export const router = createBrowserRouter([
       { path: 'novidades', element: <NovidadesAdmin /> },
       { path: 'comunidades', element: <ComunidadesAdmin /> },
       { path: 'usuarios', element: <UsuariosAdmin /> },
+      { path: 'gestores', element: <GestoresAdmin /> },
       { path: 'depoimentos', element: <DepoimentosAdmin /> },
       { path: 'analise-documento', element: <AnaliseDocumentoAdmin /> },
       { path: 'aulas-online', element: <AulasOnlineAdmin /> },
       { path: 'banners', element: <HomeBannersAdmin /> },
       { path: 'atividades', element: <AtividadesAdmin /> },
       { path: 'mapa-global', element: <MapaGlobalAdmin /> },
+    ],
+  },
+
+  // ── Gestor ────────────────────────────────────────────────
+  {
+    path: '/gestor',
+    element: <GestorLayout />,
+    children: [
+      { index: true, element: <Navigate to="/gestor/estatisticas" replace /> },
+      { path: 'estatisticas', element: <GestorEstatisticas /> },
+      { path: 'bolsas', element: <GestorBolsas /> },
+      { path: 'cursos', element: <GestorCursos /> },
+      { path: 'cursos/criar', element: <GestorCursos abrirNovo /> },
+      { path: 'cursos/:id', element: <CourseDetailAdmin basePath="/gestor/cursos" /> },
+      { path: 'aulas', element: <GestorAulas /> },
+      { path: 'comunidades', element: <GestorComunidades /> },
+      { path: 'documentos', element: <GestorDocumentos /> },
+      { path: 'perfil', element: <GestorPerfil /> },
     ],
   },
 

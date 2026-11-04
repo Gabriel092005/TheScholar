@@ -3,11 +3,11 @@ import logo from '@/assets/logo.jpeg'
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Award, Home, Sun, Moon, GraduationCap, LogOut, ChevronDown, Users, MessageCircle, Shield, BookHeart,
-  Settings, History, CalendarDays, Video, FileText, BookOpen, Newspaper, UserCheck, Globe,
+  Settings, History, CalendarDays, Video, FileText, BookOpen, Newspaper, UserCheck, Globe, FolderOpen, LayoutDashboard,
 } from "lucide-react";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useUser } from "@/api/useGetProfile";
-import { api, getUploadUrl } from "@/lib/axios";
+import { getUploadUrl } from "@/lib/axios";
 import { NotificationBell } from "@/components/notification-bell";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose,
@@ -33,12 +33,21 @@ const navItems = [
   { label: "Histórias",             href: "/historias",           icon: BookHeart },
   { label: "Depoimentos",           href: "/depoimentos",         icon: MessageCircle },
   { label: "Análise de Documentos", href: "/analise-documento",   icon: FileText },
+  { label: "Documentos",            href: "/documentos",          icon: FolderOpen },
   { label: "Perfil Académico",      href: "/perfil-academico",    icon: BookOpen },
   { label: "Destaques",             href: "/novidades",           icon: Newspaper },
   { label: "Configurações",         href: "/settings",            icon: Settings },
 ];
 
-export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean; setSidebarOpen?: (v: boolean) => void }) {
+export function Header({
+  sidebarOpen,
+  setSidebarOpen,
+  semMenu = false,
+}: {
+  sidebarOpen?: boolean;
+  setSidebarOpen?: (v: boolean) => void;
+  semMenu?: boolean;
+}) {
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
   const location = useLocation();
@@ -69,7 +78,7 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
           </Link>
 
           {/* Desktop Nav - Menu Separado */}
-          <div className="hidden md:flex items-center gap-1">
+          {!semMenu && <div className="hidden md:flex items-center gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center justify-center text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors outline-none border-none cursor-pointer p-1">
@@ -109,9 +118,20 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
                     </DropdownMenuItem>
                   </>
                 )}
+                {(user?.role === "ADMIN" || user?.role === "GESTOR") && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/gestor/estatisticas"
+                      className="flex items-center gap-3 p-2.5 text-sm rounded-lg cursor-pointer font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Painel do Gestor
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </div>}
 
           {/* Desktop Right */}
           <div className="hidden md:flex items-center gap-3">
@@ -123,7 +143,7 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            {user && <NotificationBell userId={user.id} />}
+            {user && <NotificationBell userId={user.id} role={user.role} />}
 
             {user ? (
               <DropdownMenu>
@@ -175,6 +195,28 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
                     </DropdownMenuItem>
                   )}
 
+                  {(user?.role === "ADMIN" || user?.role === "GESTOR") && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/gestor/estatisticas"
+                        className="flex items-center gap-3 p-2.5 text-sm rounded-lg cursor-pointer font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <LayoutDashboard size={16} />
+                        Painel do Gestor
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-3 p-2.5 text-sm rounded-lg cursor-pointer font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Settings size={16} />
+                      Configurações
+                    </Link>
+                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator className="my-2" />
 
                   <DropdownMenuItem
@@ -216,18 +258,29 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <button
-              className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
-              onClick={() => setSidebarOpen?.(!sidebarOpen)}
-              aria-label="Toggle menu"
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {semMenu ? (
+              !user && !isLoading && (
+                <Link
+                  to="/sign-in"
+                  className="flex h-9 items-center rounded-lg bg-emerald-500 px-3 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+                >
+                  Login
+                </Link>
+              )
+            ) : (
+              <button
+                className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
+                onClick={() => setSidebarOpen?.(!sidebarOpen)}
+                aria-label="Toggle menu"
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      <Sheet open={sidebarOpen} onOpenChange={(open) => setSidebarOpen?.(open)}>
+      <Sheet open={!semMenu && sidebarOpen} onOpenChange={(open) => setSidebarOpen?.(open)}>
         <SheetContent side="left" className="w-72 p-0 bg-white dark:bg-[#111113]">
           <SheetHeader className="px-5 py-4 border-b border-gray-100 dark:border-white/[0.06]">
             <SheetTitle className="text-left text-base font-semibold">Menu</SheetTitle>
@@ -264,6 +317,17 @@ export function Header({ sidebarOpen, setSidebarOpen }: { sidebarOpen?: boolean;
                   </Link>
                 </SheetClose>
               </>
+            )}
+            {(user?.role === "ADMIN" || user?.role === "GESTOR") && (
+              <SheetClose asChild>
+                <Link
+                  to="/gestor/estatisticas"
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Painel do Gestor
+                </Link>
+              </SheetClose>
             )}
           </nav>
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-white/[0.06]">

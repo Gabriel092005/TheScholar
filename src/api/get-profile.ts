@@ -6,7 +6,7 @@ export async function getProfile(): Promise<User> {
   return data.user;
 }
 
-export async function updateProfile(data: { nome?: string; email?: string; phone?: string }): Promise<User> {
+export async function updateProfile(data: { nome?: string; email?: string; phone?: string; bio?: string | null; paisMentoria?: string | null }): Promise<User> {
   const response = await api.put<{ user: User }>("/update", data);
   return response.data.user;
 }

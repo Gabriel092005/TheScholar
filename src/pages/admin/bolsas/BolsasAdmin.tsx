@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { bolsasApi, type Bolsa } from "@/api/bolsas";
 import { api, getUploadUrl } from "@/lib/axios";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
 import toast from "react-hot-toast";
 
 interface ScholarshipForm {
@@ -45,6 +46,13 @@ const levels = ["GRADUACAO", "MESTRADO", "DOUTORAMENTO", "MBA", "POSGRADUACAO"];
 
 const tagSuggestions = ["Integral", "Parcial", "Europa", "EUA", "Ásia", "Presencial", "Online", "Mobilidade", "Pesquisa", "Graduação", "Pós-Graduação", "Idiomas", "Tutoria"];
 
+function formatDate(value?: string | null): string {
+  if (!value) return "—";
+  const date = new Date(value.length <= 10 ? `${value}T00:00:00` : value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function mapBolsaToForm(bolsa: Bolsa): ScholarshipForm {
   const parseInstituicoes = (val?: string): string[] => {
     if (!val) return [""];
@@ -67,7 +75,7 @@ function mapBolsaToForm(bolsa: Bolsa): ScholarshipForm {
     descricao: bolsa.descricao || "",
     tags: bolsa.tags || [],
     status: bolsa.status === "PUBLICADA" ? "ativa" : "inativa",
-    prazo: bolsa.prazo || "",
+    prazo: bolsa.prazo ? String(bolsa.prazo).slice(0, 10) : "",
     numeroVagas: bolsa.numeroVagas ?? null,
     imagemBg: bolsa.imagemBg || "",
   };
@@ -386,8 +394,8 @@ export function BolsasAdmin() {
             exit={{ opacity: 0, x: -20 }}
             className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden"
           >
-            <div className="p-5 border-b border-gray-100 dark:border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-white/[0.06] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => setShowForm(false)}
                   className="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.06]"
@@ -403,11 +411,11 @@ export function BolsasAdmin() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button className="bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={() => setShowForm(false)} disabled={isFormLoading}>
+              <div className="flex shrink-0 items-center gap-3">
+                <Button className="flex-1 sm:flex-none bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={() => setShowForm(false)} disabled={isFormLoading}>
                   Cancelar
                 </Button>
-                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
+                <Button className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
                   {isFormLoading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Check size={16} className="mr-2" />}
                   Guardar
                 </Button>
@@ -439,7 +447,7 @@ export function BolsasAdmin() {
 
                 {renderInstituicoes()}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-700 dark:text-zinc-300">País</Label>
                     <Input
@@ -480,19 +488,19 @@ export function BolsasAdmin() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-700 dark:text-zinc-300">Prazo</Label>
                     <Input
                       type="date"
                       value={form.prazo}
                       onChange={(e) => setForm({ ...form, prazo: e.target.value })}
-                      className="mt-1.5"
+                      className="mt-1.5 dark:[color-scheme:dark]"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-700 dark:text-zinc-300">Vagas</Label>
                     <Input
@@ -639,10 +647,10 @@ export function BolsasAdmin() {
                 </Select>
               </div>
 
-              <ScrollArea className="w-full whitespace-nowrap">
-                <table className="w-full">
+              <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+                <table className={fragmentedTable}>
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/[0.06]">
+                    <tr>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Bolsa</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Instituições</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">País</th>
@@ -655,13 +663,13 @@ export function BolsasAdmin() {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={8} className="text-center py-12">
                           <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
                         </td>
                       </tr>
                     ) : filteredBolsas.length === 0 ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={8} className="text-center py-12">
                           <Award size={40} className="mx-auto text-gray-300 dark:text-zinc-700 mb-3" />
                           <p className="text-gray-500 dark:text-zinc-500">Nenhuma bolsa encontrada</p>
@@ -671,10 +679,7 @@ export function BolsasAdmin() {
                       filteredBolsas.map((bolsa) => {
                         const insts = bolsa.instituicao?.split("|").map((s) => s.trim()).filter(Boolean) || [];
                         return (
-                          <tr
-                            key={bolsa.id}
-                            className="border-b border-gray-50 dark:border-white/[0.05] hover:bg-gray-50 dark:hover:bg-white/[0.03]"
-                          >
+                          <tr key={bolsa.id} className={fragmentedRow}>
                             <td className="px-5 py-4">
                               <div>
                                 <p className="font-medium text-gray-900 dark:text-white">{bolsa.titulo}</p>
@@ -705,7 +710,9 @@ export function BolsasAdmin() {
                               </div>
                             </td>
                             <td className="px-5 py-4">
-                              <span className="text-sm text-gray-600 dark:text-zinc-400">{bolsa.prazo || bolsa.datasImportantes?.prazo || "-"}</span>
+                              <span className="inline-flex items-center rounded-lg bg-gray-50 px-2 py-1 text-sm tabular-nums text-gray-700 dark:bg-white/[0.06] dark:text-zinc-300">
+                                {formatDate(bolsa.prazo || bolsa.datasImportantes?.prazo)}
+                              </span>
                             </td>
                             <td className="px-5 py-4">
                               <span className="text-sm font-medium text-gray-900 dark:text-white">{bolsa.numeroVagas ?? "-"}</span>
@@ -717,14 +724,14 @@ export function BolsasAdmin() {
                             </td>
                             <td className="px-5 py-4 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => handleEdit(bolsa)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06]">
-                                  <Edit size={14} className="text-gray-400 dark:text-zinc-500" />
+                                <button onClick={() => handleEdit(bolsa)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-white">
+                                  <Edit size={14} />
                                 </button>
-                                <button onClick={() => handleDelete(bolsa.id)} disabled={deleteMutation.isPending} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50">
+                                <button onClick={() => handleDelete(bolsa.id)} disabled={deleteMutation.isPending} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
                                   {deleteMutation.isPending ? (
-                                    <Loader2 size={14} className="animate-spin text-red-400" />
+                                    <Loader2 size={14} className="animate-spin" />
                                   ) : (
-                                    <Trash2 size={14} className="text-red-400 dark:text-red-500" />
+                                    <Trash2 size={14} />
                                   )}
                                 </button>
                               </div>

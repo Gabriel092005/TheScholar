@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listarComunidades, criarComunidade, entrarComunidade, editarComunidade } from "@/api/comunidades";
+import { listarComunidades, entrarComunidade, editarComunidade } from "@/api/comunidades";
+import { CriarComunidadeDialog } from "@/components/criar-comunidade-dialog";
 import { api, getUploadUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
 
@@ -29,9 +29,6 @@ export function ComunidadesAdmin() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [criarOpen, setCriarOpen] = useState(false);
-  const [nome, setNome] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [bolsaId, setBolsaId] = useState("");
 
   const [editarOpen, setEditarOpen] = useState(false);
   const [editarId, setEditarId] = useState("");
@@ -61,27 +58,6 @@ export function ComunidadesAdmin() {
   const { data: comunidades = [], isLoading } = useQuery({
     queryKey: ["admin-comunidades"],
     queryFn: listarComunidades,
-  });
-
-  const { data: bolsas = [] } = useQuery({
-    queryKey: ["admin-bolsas-select"],
-    queryFn: async () => {
-      const { data } = await api.get("/bolsas");
-      return data.data || data;
-    },
-  });
-
-  const criarMutation = useMutation({
-    mutationFn: () => criarComunidade({ nome, descricao: descricao || undefined, bolsaId: bolsaId || undefined }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-comunidades"] });
-      setCriarOpen(false);
-      setNome("");
-      setDescricao("");
-      setBolsaId("");
-      toast.success("Comunidade criada!");
-    },
-    onError: () => toast.error("Erro ao criar comunidade"),
   });
 
   const editarMutation = useMutation({
@@ -266,73 +242,7 @@ export function ComunidadesAdmin() {
         </div>
       </motion.div>
 
-      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
-        <DialogContent className="max-w-md rounded-3xl bg-white dark:bg-[#111113]">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-black text-gray-900 dark:text-white">
-              Criar Comunidade
-            </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 dark:text-zinc-300">
-              Crie um espaço para conectar pessoas com interesses em comum.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-gray-700 dark:text-white">Nome</Label>
-              <Input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex: Devs Angola"
-                className="h-11 rounded-xl bg-white dark:bg-transparent dark:text-white placeholder:dark:text-zinc-500"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-gray-700 dark:text-white">Descrição (opcional)</Label>
-              <Textarea
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder="O propósito desta comunidade..."
-                className="rounded-xl bg-white dark:bg-transparent dark:text-white placeholder:dark:text-zinc-500 resize-none"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-gray-700 dark:text-white">Bolsa (opcional)</Label>
-              <Select value={bolsaId} onValueChange={setBolsaId}>
-                <SelectTrigger className="h-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-transparent dark:text-white">
-                  <SelectValue placeholder="Selecionar bolsa..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {bolsas.map((b: any) => (
-                    <SelectItem key={b.id} value={b.id}>{b.titulo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setCriarOpen(false)}
-              className="rounded-xl h-11 font-bold text-sm dark:text-white"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => criarMutation.mutate()}
-              disabled={!nome.trim() || criarMutation.isPending}
-              className="rounded-xl h-11 font-bold text-sm bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
-            >
-              {criarMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Criar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CriarComunidadeDialog open={criarOpen} onOpenChange={setCriarOpen} />
       <Dialog open={editarOpen} onOpenChange={setEditarOpen}>
         <DialogContent className="max-w-lg rounded-3xl bg-white dark:bg-[#111113]">
           <DialogHeader>

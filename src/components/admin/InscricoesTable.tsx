@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { bolsasApi, type BolsaInscricao } from "@/api/bolsas";
+import { cobrancaMomenu } from "@/api/pagamentos";
 import { api, getUploadUrl } from "@/lib/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
@@ -62,6 +63,13 @@ const statusConfig: Record<string, { label: string; classes: string }> = {
     classes: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
   },
 };
+
+function estadoDaInscricao(inscricao: BolsaInscricao) {
+  const estado = statusConfig[inscricao.status] || statusConfig.PENDENTE;
+  return inscricao.status === "PENDENTE" && cobrancaMomenu(inscricao.metodoPagamento)
+    ? { ...estado, label: "Aguarda pagamento" }
+    : estado;
+}
 
 function makeUrl(path?: string) {
   if (!path) return "";
@@ -187,7 +195,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
 
   function renderAcoes(inscricao: BolsaInscricao) {
     const isExpanded = expandedId === inscricao.id;
-    const podeAvaliar = inscricao.status === "PENDENTE";
+    const podeAvaliar = inscricao.status === "PENDENTE" && !cobrancaMomenu(inscricao.metodoPagamento);
     return (
       <div className="flex items-center gap-1">
         <button
@@ -206,14 +214,14 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
             <button
               onClick={() => { setAvaliarModal({ inscricao, action: "APROVADA" }); setObservacoes(""); }}
               className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
-              title="Aprovar"
+              title="Aprovar registo antigo"
             >
               <Check size={14} className="text-emerald-500" />
             </button>
             <button
               onClick={() => { setAvaliarModal({ inscricao, action: "REJEITADA" }); setObservacoes(""); }}
               className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
-              title="Rejeitar"
+              title="Rejeitar registo antigo"
             >
               <X size={14} className="text-red-400" />
             </button>
@@ -318,7 +326,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                       const userImage = inscricao.usuario?.image_path
                         ? getUploadUrl(`/${inscricao.usuario.image_path}`)
                         : "";
-                      const status = statusConfig[inscricao.status] || statusConfig.PENDENTE;
+                      const status = estadoDaInscricao(inscricao);
 
                       return (
                         <tr
@@ -372,7 +380,7 @@ export function InscricoesTable({ tipoInteresse, title, description, emptyMessag
                   const userImage = inscricao.usuario?.image_path
                     ? getUploadUrl(`/${inscricao.usuario.image_path}`)
                     : "";
-                  const status = statusConfig[inscricao.status] || statusConfig.PENDENTE;
+                  const status = estadoDaInscricao(inscricao);
 
                   return (
                     <div key={inscricao.id} className="p-4 space-y-3">

@@ -3,9 +3,11 @@ import { Header } from "@/components/header";
 import { Outlet, useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sidebar } from "@/components/sideBarLink";
+import { VoltarAoTopo } from "@/components/voltar-ao-topo";
 import { useUser } from "@/api/useGetProfile";
 import { ScholarshipAIChat } from "@/pages/app/scholarShip/ScholarshipAIChat";
 import { Loader2 } from "lucide-react";
+import { MotionConfig } from "framer-motion";
 import Cookies from "js-cookie";
 
 export function AppLayoutAdmin() {
@@ -31,13 +33,16 @@ export function AppLayoutAdmin() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col antialiased bg-background overflow-hidden">
+    <div className="flex h-dvh w-full flex-col antialiased bg-background overflow-hidden">
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar />
         <ScrollArea className="flex-1">
-          <Outlet />
+          <MotionConfig reducedMotion="user">
+            <VoltarAoTopo />
+            <Outlet />
+          </MotionConfig>
         </ScrollArea>
       </div>
 

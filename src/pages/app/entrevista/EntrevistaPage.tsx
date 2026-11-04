@@ -12,8 +12,9 @@ import { pt } from "date-fns/locale";
 import { api, getUploadUrl } from "@/lib/axios";
 import {
   Send, Loader2, ArrowLeft, Briefcase, AlertTriangle,
-  RefreshCw, X, GraduationCap, User,
+  RefreshCw, X, GraduationCap, User, UserCheck,
 } from "lucide-react";
+import { UserPageHeader } from "@/components/user-ui";
 
 interface Message {
   role: "user" | "assistant";
@@ -148,35 +149,17 @@ function SelecaoBolsas({ onSelect }: { onSelect: (id: string) => void }) {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-white dark:bg-[#111113]"
     >
-      <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 dark:from-[#0a1a14] dark:via-[#0d2420] dark:to-[#0a0a0a]">
-        <div className="relative container mx-auto px-6 py-8 md:py-10 max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-xl"
-          >
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-emerald-100 text-[9px] font-medium mb-3">
-              Entrevista de Bolsas
-            </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.15] mb-2 tracking-tight">
-              Ernesto
-            </h1>
-            <p className="text-emerald-100/80 text-xs md:text-sm max-w-lg leading-relaxed">
-              Selecione uma bolsa para iniciar a entrevista de avaliação com o nosso entrevistador oficial.
-              Será avaliado criteriosamente com base no seu perfil e nas suas respostas.
-            </p>
-          </motion.div>
-
-          <div className="flex items-center gap-2 mt-4 text-emerald-100/70 text-[11px]">
-            <Briefcase className="h-3 w-3" />
-            <span className="font-semibold text-white">{scholarships.length}</span>
-            <span>bolsas disponíveis</span>
-          </div>
-        </div>
-        <div className="h-12 bg-gradient-to-t from-white dark:from-[#111113] to-transparent" />
-      </div>
-
-      <section className="container mx-auto px-6 py-12 max-w-6xl">
+      <section className="container mx-auto px-6 py-8 sm:py-10 max-w-6xl">
+        <UserPageHeader
+          icon={UserCheck}
+          title="Entrevista IA"
+          description="Escolha uma bolsa e treine a sua entrevista com o entrevistador virtual."
+        />
+        <p className="mb-6 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+          <Briefcase className="h-4 w-4" />
+          <span className="font-semibold text-gray-900 dark:text-white">{scholarships.length}</span>
+          bolsas disponíveis
+        </p>
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -366,35 +349,36 @@ function EntrevistaChat({
       animate={{ opacity: 1 }}
       className="min-h-screen bg-white dark:bg-[#111113] flex flex-col"
     >
-      <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 dark:from-[#0a1a14] dark:via-[#0d2420] dark:to-[#0a0a0a]">
+      <div className="border-b border-gray-100 bg-white dark:border-white/[0.06] dark:bg-[#111113]">
         <div className="container mx-auto px-6 py-4 max-w-6xl">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={onVoltar}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+                aria-label="Voltar"
+                className="p-2 rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center ring-2 ring-white/20">
-                  <User className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20">
+                  <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Ernesto</p>
-                  <p className="text-[10px] text-white/60">Entrevistador Oficial</p>
+                  <h1 className="text-sm font-semibold text-gray-900 dark:text-white">Ernesto</h1>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">Entrevistador Oficial</p>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-white/80 font-medium truncate max-w-[200px]">
+            <div className="min-w-0 text-right">
+              <p className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate max-w-[200px]">
                 {bolsaTitulo}
               </p>
               {!finalizado && started && (
                 <button
                   onClick={handleFinalizar}
                   disabled={loading}
-                  className="mt-1 text-[10px] px-3 py-1 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 transition-colors disabled:opacity-50"
+                  className="mt-1 text-xs px-3 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 dark:bg-white/[0.06] dark:text-zinc-300 dark:hover:bg-white/[0.1]"
                 >
                   Finalizar Entrevista
                 </button>

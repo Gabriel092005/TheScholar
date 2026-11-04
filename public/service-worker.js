@@ -1,16 +1,14 @@
 /* eslint-disable no-restricted-globals */
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+// Importado pelo service worker gerado (ver vite.config.ts), que trata da cache e das atualizações.
 
+// As versões anteriores guardavam aqui respostas privadas da API: não podem ficar no aparelho.
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(caches.delete('api-cache'));
 });
 
-self.addEventListener('push', (event) => { // Remova os 'ww'
-  console.log('Dados brutos recebidos:', event.data?.text());
-  let data = { title: "Liberal", body: "Nova atualização disponível.", url: "/" };
+self.addEventListener('push', (event) => {
+  let data = { title: 'Afroscholars', body: 'Tem uma nova atualização.', url: '/' };
   if (event.data) {
     try {
       data = { ...data, ...event.data.json() };
@@ -19,14 +17,15 @@ self.addEventListener('push', (event) => { // Remova os 'ww'
     }
   }
 
-  const options = {
-    body: data.body,
-    icon: '/icon-192x192.png',
-    badge: '/badge-icon.png',
-    data: { url: data.url || '/' }
-  };
-
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icons/pwa-192x192.png',
+      badge: '/icons/pwa-64x64.png',
+      tag: data.tag,
+      data: { url: data.url || '/' },
+    })
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
@@ -35,7 +34,7 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (let client of windowClients) {
+      for (const client of windowClients) {
         if (client.url === urlToOpen && 'focus' in client) return client.focus();
       }
       if (clients.openWindow) return clients.openWindow(urlToOpen);

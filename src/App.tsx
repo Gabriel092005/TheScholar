@@ -7,6 +7,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/react-query'
 import { ThemeProvider } from './components/theme/theme-provider'
 import { CartProvider } from '@/contexts/cart-context'
+import { PwaStatus } from './components/pwa-status'
 import { api } from './lib/axios'
 import { useEffect } from 'react'
 
@@ -62,6 +63,7 @@ export function App() {
       <Helmet titleTemplate='%s | Afroscholars' />
       <Toaster richColors />
       <ThemeProvider storageKey="vite-ui-theme" defaultTheme="light">
+        <PwaStatus />
         <CartProvider>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />

@@ -16,6 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { novidadesApi, type Novidade } from "@/api/novidades";
 import { api, getUploadUrl } from "@/lib/axios";
+import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
 import toast from "react-hot-toast";
 
 interface NovidadeForm {
@@ -184,7 +185,7 @@ export function NovidadesAdmin() {
   }, [editingId, novidades]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <AnimatePresence mode="wait">
         {showForm ? (
           <motion.div
@@ -194,8 +195,8 @@ export function NovidadesAdmin() {
             exit={{ opacity: 0, x: -20 }}
             className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden"
           >
-            <div className="p-5 border-b border-gray-100 dark:border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-white/[0.06] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <button onClick={closeForm} className="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.06]">
                   <ChevronLeft size={18} className="text-gray-500 dark:text-zinc-500" />
                 </button>
@@ -206,11 +207,11 @@ export function NovidadesAdmin() {
                   <p className="text-sm text-gray-500 dark:text-zinc-500">Preencha os dados da novidade</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button className="bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={closeForm} disabled={isFormLoading}>
+              <div className="flex shrink-0 items-center gap-3">
+                <Button className="flex-1 sm:flex-none bg-zinc-500 hover:bg-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white" onClick={closeForm} disabled={isFormLoading}>
                   Cancelar
                 </Button>
-                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
+                <Button className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleSave} disabled={isFormLoading}>
                   {isFormLoading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Check size={16} className="mr-2" />}
                   Guardar
                 </Button>
@@ -466,10 +467,10 @@ export function NovidadesAdmin() {
                 </Select>
               </div>
 
-              <ScrollArea className="w-full whitespace-nowrap">
-                <table className="w-full">
+              <ScrollArea className="w-full whitespace-nowrap px-4 pb-4">
+                <table className={fragmentedTable}>
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/[0.06]">
+                    <tr>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Título</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Status</th>
                       <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Destaque</th>
@@ -479,13 +480,13 @@ export function NovidadesAdmin() {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={5} className="text-center py-12">
                           <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
                         </td>
                       </tr>
                     ) : filtered.length === 0 ? (
-                      <tr>
+                      <tr className={fragmentedRow}>
                         <td colSpan={5} className="text-center py-12">
 
                           <p className="text-gray-500 dark:text-zinc-500">Nenhuma novidade encontrada</p>
@@ -493,10 +494,7 @@ export function NovidadesAdmin() {
                       </tr>
                     ) : (
                       filtered.map((novidade) => (
-                        <tr
-                          key={novidade.id}
-                          className="border-b border-gray-50 dark:border-white/[0.05] hover:bg-gray-50 dark:hover:bg-white/[0.03]"
-                        >
+                        <tr key={novidade.id} className={fragmentedRow}>
                           <td className="px-5 py-4">
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">{novidade.title}</p>
@@ -526,8 +524,8 @@ export function NovidadesAdmin() {
                           </td>
                           <td className="px-5 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => handleEdit(novidade)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06]">
-                                <Edit size={14} className="text-gray-400 dark:text-zinc-500" />
+                              <button onClick={() => handleEdit(novidade)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-zinc-500 dark:hover:bg-white/[0.06] dark:hover:text-white">
+                                <Edit size={14} />
                               </button>
                               <button
                                 onClick={async () => {
@@ -537,12 +535,12 @@ export function NovidadesAdmin() {
                                   }
                                 }}
                                 disabled={deleteMutation.isPending}
-                                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
+                                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                               >
                                 {deleteMutation.isPending ? (
-                                  <Loader2 size={14} className="animate-spin text-red-400" />
+                                  <Loader2 size={14} className="animate-spin" />
                                 ) : (
-                                  <Trash2 size={14} className="text-red-400 dark:text-red-500" />
+                                  <Trash2 size={14} />
                                 )}
                               </button>
                             </div>

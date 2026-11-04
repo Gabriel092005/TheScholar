@@ -200,7 +200,7 @@ export function PlayerAulas() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#0a0a0a] text-gray-900 dark:text-white overflow-hidden">
+    <div className="h-dvh flex flex-col bg-[#0a0a0a] text-gray-900 dark:text-white overflow-hidden">
       {/* Top Bar - YouTube style */}
       <header className="flex items-center justify-between px-3 lg:px-5 py-2 bg-[#0a0a0a] border-b border-white/[0.06] shrink-0 z-30">
         <div className="flex items-center gap-3">

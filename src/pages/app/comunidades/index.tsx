@@ -3,21 +3,17 @@ import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  MessageCircle, Users, Plus, Loader2,
+  MessageCircle, Users, Plus,
   Search, ChevronRight, GraduationCap,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
+import { CardAccent, Reveal, UserPageHeader, cardTitle, userCard } from "@/components/user-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { listarComunidades, criarComunidade, entrarComunidade, type Community } from "@/api/comunidades";
-import { bolsasApi } from "@/api/bolsas";
-import { api } from "@/lib/axios";
+import { listarComunidades, entrarComunidade, type Community } from "@/api/comunidades";
+import { CriarComunidadeDialog } from "@/components/criar-comunidade-dialog";
 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -41,66 +37,23 @@ export function ComunidadesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [criarOpen, setCriarOpen] = useState(false);
-  const [nome, setNome] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [bolsaId, setBolsaId] = useState("");
 
-  const isStaff = tokenRole === "ADMIN" || tokenRole === "GESTOR";
-
+  // A API já só devolve as comunidades que este usuário pode ver.
   const { data: comunidades = [], isLoading } = useQuery({
     queryKey: ["comunidades"],
     queryFn: listarComunidades,
   });
 
-  const { data: inscricoes = [] } = useQuery({
-    queryKey: ["minhas-inscricoes-filtro"],
-    queryFn: () => bolsasApi.listMinhasInscricoes(),
-    enabled: !isStaff,
-  });
-
-  const bolsaIdsPermitidos = new Set(
-    (inscricoes as any[])
-      .filter((i: any) => i.tipoInteresse === "MENTORIA" && i.bolsaId)
-      .map((i: any) => i.bolsaId)
-  );
-
-  const comunidadesVisiveis = isStaff
-    ? comunidades
-    : comunidades.filter((c) => !c.bolsaId || bolsaIdsPermitidos.has(c.bolsaId));
-
-  const { data: bolsas = [] } = useQuery({
-    queryKey: ["bolsas-select"],
-    queryFn: async () => {
-      const { data } = await api.get("/bolsas");
-      return data.data || data;
-    },
-    enabled: isStaff,
-  });
-
-  const criarMutation = useMutation({
-    mutationFn: () => criarComunidade({ nome, descricao: descricao || undefined, bolsaId: bolsaId || undefined }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["comunidades"] });
-      setCriarOpen(false);
-      setNome("");
-      setDescricao("");
-      setBolsaId("");
-      toast.success("Comunidade criada!");
-      navigate(`/comunidades/${data.id}`);
-    },
-    onError: () => toast.error("Erro ao criar comunidade"),
-  });
-
   const entrarMutation = useMutation({
     mutationFn: entrarComunidade,
-    onSuccess: () => {
+    onSuccess: (mensagem) => {
       queryClient.invalidateQueries({ queryKey: ["comunidades"] });
-      toast.success("Solicitação enviada! Aguarde aprovação.");
+      toast.success(mensagem);
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || "Erro ao solicitar entrada"),
   });
 
-  const filtradas = comunidadesVisiveis.filter((c) =>
+  const filtradas = comunidades.filter((c) =>
     c.nome.toLowerCase().includes(search.toLowerCase()) ||
     c.descricao?.toLowerCase().includes(search.toLowerCase())
   );
@@ -111,29 +64,22 @@ export function ComunidadesPage() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl"
     >
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
-      >
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-            Comunidades
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-            Conecte-se, troque ideias e aprenda em grupo.
-          </p>
-        </div>
-        {(tokenRole === "ADMIN" || tokenRole === "GESTOR") && (
-          <Button
-            onClick={() => setCriarOpen(true)}
-            className="h-11 px-5 text-sm font-bold rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Criar Comunidade
-          </Button>
-        )}
-      </motion.div>
+      <UserPageHeader
+        icon={Users}
+        title="Comunidades"
+        description="Conecte-se, troque ideias e aprenda em grupo."
+        action={
+          (tokenRole === "ADMIN" || tokenRole === "GESTOR") && (
+            <Button
+              onClick={() => setCriarOpen(true)}
+              className="h-11 px-5 text-sm font-bold rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Comunidade
+            </Button>
+          )
+        }
+      />
 
       <div className="relative mb-6">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -187,78 +133,11 @@ export function ComunidadesPage() {
         </div>
       )}
 
-      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
-        <DialogContent className="max-w-md rounded-3xl bg-white dark:bg-[#111113]">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-black text-gray-900 dark:text-white">
-              Criar Comunidade
-            </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 dark:text-zinc-400">
-              Crie um espaço para partilhar ideias e discutir temas.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-zinc-500">
-                Nome
-              </Label>
-              <Input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex: Bolsas Europa 2026"
-                className="h-11 rounded-xl bg-gray-50 dark:bg-white/[0.04] text-sm focus-visible:ring-emerald-500/40"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-zinc-500">
-                Descrição (opcional)
-              </Label>
-              <Textarea
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Descreva o propósito da comunidade..."
-                className="rounded-xl bg-gray-50 dark:bg-white/[0.04] text-sm resize-none focus-visible:ring-emerald-500/40"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-zinc-500">
-                Bolsa (opcional)
-              </Label>
-              <Select value={bolsaId} onValueChange={setBolsaId}>
-                <SelectTrigger className="h-11 rounded-xl bg-gray-50 dark:bg-white/[0.04] text-sm focus-visible:ring-emerald-500/40">
-                  <SelectValue placeholder="Selecionar bolsa..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {bolsas.map((b: any) => (
-                    <SelectItem key={b.id} value={b.id}>{b.titulo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCriarOpen(false)}
-              className="rounded-xl border-gray-200 dark:border-white/[0.08] dark:text-white"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => criarMutation.mutate()}
-              disabled={!nome || nome.length < 3 || criarMutation.isPending}
-              className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              {criarMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Criar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CriarComunidadeDialog
+        open={criarOpen}
+        onOpenChange={setCriarOpen}
+        onCriada={(comunidade) => navigate(`/comunidades/${comunidade.id}`)}
+      />
     </motion.div>
   );
 }
@@ -272,21 +151,18 @@ function CommunityCard({ comunidade, index, onEnter, isEntering }: {
   const avatarColor = COLORS[comunidade.nome.length % COLORS.length];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.35 }}
-    >
+    <Reveal index={index}>
       <Link
         to={`/comunidades/${comunidade.id}`}
-        className="block group rounded-2xl p-5 border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-[#111113] hover:border-emerald-200 dark:hover:border-emerald-500/25 hover:shadow-sm transition-all duration-200"
+        className={`${userCard} flex h-full flex-col p-5`}
       >
+        <CardAccent />
         <div className="flex items-start gap-3 mb-3">
-          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0", avatarColor)}>
+          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110 motion-reduce:transform-none", avatarColor)}>
             {comunidade.nome.substring(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+            <h3 className={`${cardTitle} text-sm truncate`}>
               {comunidade.nome}
             </h3>
             <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 dark:text-zinc-500">
@@ -300,7 +176,7 @@ function CommunityCard({ comunidade, index, onEnter, isEntering }: {
               </span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-zinc-600 group-hover:text-emerald-500 transition-colors shrink-0 mt-1" />
+          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-zinc-600 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300 shrink-0 mt-1" />
         </div>
 
         {comunidade.descricao && (
@@ -316,8 +192,8 @@ function CommunityCard({ comunidade, index, onEnter, isEntering }: {
           </p>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/[0.06]">
-          <span className="text-[10px] text-gray-400 dark:text-zinc-600">
+        <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/[0.06]">
+          <span className="text-xs text-gray-500 dark:text-zinc-400">
             {comunidade.souMembro ? (
               <span className="text-emerald-600 dark:text-emerald-400 font-medium">Membro</span>
             ) : comunidade.solicitacaoPendente ? (
@@ -341,6 +217,6 @@ function CommunityCard({ comunidade, index, onEnter, isEntering }: {
           )}
         </div>
       </Link>
-    </motion.div>
+    </Reveal>
   );
 }

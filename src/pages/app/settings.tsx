@@ -5,8 +5,9 @@ import {
   Moon, Sun, Monitor, LogOut, Eye, EyeOff,
   Loader2, CheckCircle2, Smartphone, Mail, Globe,
   Award, GraduationCap, MessageCircle, DollarSign,
-  BellRing, BellOff, Clock, Bot, Trash2
+  BellRing, BellOff, Clock, Bot, Trash2, Settings
 } from "lucide-react";
+import { UserPageHeader } from "@/components/user-ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -195,19 +196,11 @@ export function SettingsPage() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl"
     >
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="mb-8"
-      >
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-          Definições
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-          Gerir as suas preferências e configurações da conta.
-        </p>
-      </motion.div>
+      <UserPageHeader
+        icon={Settings}
+        title="Definições"
+        description="Gerir as suas preferências e configurações da conta."
+      />
 
       <div className="space-y-6">
 
@@ -509,7 +502,7 @@ export function SettingsPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => { setShowPasswordForm(false); setCurrentPassword(""); setNewPassword(""); }}
-                  className="h-10 px-5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className="h-10 px-5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-white dark:hover:text-zinc-200"
                 >
                   Cancelar
                 </Button>

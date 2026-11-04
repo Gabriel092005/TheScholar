@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -6,17 +6,16 @@ import {
   BookOpen, Users, Clock, Play, FileText,
   ArrowLeft, CheckCircle, Loader2, CreditCard,
   Lock, X, Monitor, CheckSquare,
-  Building2, Upload, ChevronRight, ChevronLeft,
+  ChevronRight, ChevronLeft,
   PlayCircle, BarChart3, Award,
 } from "lucide-react";
-import { ExpressIcon, MulticaixaIcon } from "@/components/payment-icons";
+import { EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import type { MetodoPagamento, PagamentoMomenu } from "@/api/pagamentos";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cursosApi, type Curso, type Aula } from "@/api/cursos";
-import { api, getUploadUrl } from "@/lib/axios";
-import toast from "react-hot-toast";
+import { getUploadUrl } from "@/lib/axios";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "scholar-lessons-completed";
 
@@ -74,9 +73,9 @@ export function CursoDetail() {
     }
     return url;
   };
-  const [metodoPagamento, setMetodoPagamento] = useState<"EXPRESS" | "TRANSFERENCIA" | "MULTICAIXA">("EXPRESS");
-  const [referenciaPagamento, setReferenciaPagamento] = useState("");
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
+  const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>("momenu-mcx");
+  const [telefonePagamento, setTelefonePagamento] = useState("");
+  const [pagamentoAtivo, setPagamentoAtivo] = useState<PagamentoMomenu | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -114,42 +113,52 @@ export function CursoDetail() {
     }
   };
 
+  const cursoGratuito = Number(curso?.preco ?? 0) <= 0;
+
   const aderirMutation = useMutation({
     mutationFn: async () => {
-      if (!referenciaPagamento.trim()) {
-        throw new Error("Informe a referência do pagamento");
-      }
-      let comprovativoUrl = "";
-      if (comprovativo) {
-        const form = new FormData();
-        form.append("file", comprovativo);
-        const { data } = await api.post("/upload", form);
-        comprovativoUrl = data.url || data.path || "";
+      if (cursoGratuito) return cursosApi.aderir(id!);
+      if (metodoPagamento === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
+        throw new Error("Indique um telefone válido com 9 dígitos, a começar por 9.");
       }
       return cursosApi.aderir(id!, {
         metodo: metodoPagamento,
-        referencia: referenciaPagamento,
-        comprovativo: comprovativoUrl,
+        phoneNumber: metodoPagamento === "momenu-mcx" ? normalizarTelefone(telefonePagamento) : undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: (resultado) => {
+      if (resultado.pagamento) {
+        setPagamentoAtivo(resultado.pagamento);
+        return;
+      }
       setShowPayment(false);
-      setComprovativo(null);
-      setReferenciaPagamento("");
-      toast.success("Pagamento enviado! Aguarde aprovação do admin.");
+      toast.success("Curso adicionado!");
+      checkAcesso();
     },
     onError: (error: any) => {
-      if (error.message === "Informe a referência do pagamento") {
-        toast.error(error.message);
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.response?.data?.error) {
-        toast.error(error.response.data.error);
-      } else {
-        toast.error("Erro ao processar pagamento. Verifique a sua conexão e tente novamente.");
-      }
+      toast.error(
+        error.response?.data?.message ||
+          (error.response ? "Erro ao processar pagamento." : error.message) ||
+          "Erro ao processar pagamento. Verifique a sua conexão e tente novamente."
+      );
     },
   });
+
+  const fecharPagamento = () => {
+    if (aderirMutation.isPending) return;
+    setShowPayment(false);
+    setPagamentoAtivo(null);
+  };
+
+  const fecharEstadoPagamento = (status: PagamentoMomenu["status"]) => {
+    setPagamentoAtivo(null);
+    if (status !== "FALHADO") setShowPayment(false);
+  };
+
+  const pagamentoConfirmado = useCallback(() => {
+    toast.success("Pagamento confirmado!");
+    checkAcesso();
+  }, [curso]);
 
   const handleAderir = () => aderirMutation.mutate();
 
@@ -305,16 +314,17 @@ export function CursoDetail() {
   // ─── SEÇÃO DE PUBLICIDADE/PROMOÇÃO (quem NÃO tem acesso) ─────────────────
   const renderPromocional = () => (
     <div className="bg-white dark:bg-[#111113]">
-      {/* Hero Minimal */}
+      <div className="max-w-5xl mx-auto px-4 pt-6 pb-2">
+        <button
+          onClick={() => navigate("/cursos")}
+          className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Todos os Cursos
+        </button>
+      </div>
       <div className="border-b border-gray-100 dark:border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
-          <button
-            onClick={() => navigate("/cursos")}
-            className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Todos os Cursos
-          </button>
+        <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             <div className="md:col-span-2">
@@ -362,22 +372,26 @@ export function CursoDetail() {
             {/* Card Preço */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
               <div className="bg-gray-50 dark:bg-white/[0.04] rounded-2xl p-5 border border-gray-100 dark:border-white/[0.06]">
+                {curso.bolsa && cursoGratuito ? (
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-900 dark:text-white">Incluído na bolsa</div>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{curso.bolsa.titulo}</p>
+                    <Button
+                      className="mt-4 w-full bg-emerald-500 hover:bg-emerald-600 text-white h-11 text-sm font-medium"
+                      onClick={() => navigate(`/bolsas/${curso.bolsa!.id}`)}
+                    >
+                      Ver bolsa
+                    </Button>
+                    <p className="text-[10px] text-gray-400 dark:text-zinc-600 mt-3">
+                      O acesso é libertado assim que o pagamento da inscrição na bolsa for confirmado
+                    </p>
+                  </div>
+                ) : (
+                <>
                 <div className="text-center mb-4">
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatPrice(Number(curso.preco))}
                   </div>
-                  {curso.precoOriginal && (
-                    <div className="text-xs text-gray-400 dark:text-zinc-500 line-through mt-0.5">
-                      {formatPrice(Number(curso.precoOriginal))}
-                    </div>
-                  )}
-                  {curso.precoOriginal && (
-                    <div className="mt-2">
-                      <span className="inline-flex px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
-                        Economia de {formatPrice(Number(curso.precoOriginal) - Number(curso.preco))}
-                      </span>
-                    </div>
-                  )}
                   {aulasGratuitas.length > 0 && (
                     <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-3 flex items-center justify-center gap-1.5">
                       <PlayCircle className="h-3.5 w-3.5 text-emerald-500" />
@@ -395,8 +409,10 @@ export function CursoDetail() {
                 </Button>
 
                 <p className="text-[10px] text-gray-400 dark:text-zinc-600 text-center mt-3">
-                  Pagamento analisado pelo admin
+                  Pague por Multicaixa Express ou por referência
                 </p>
+                </>
+                )}
               </div>
             </motion.div>
           </div>
@@ -521,86 +537,57 @@ export function CursoDetail() {
 
       {/* Payment Dialog */}
       {showPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { if (!aderirMutation.isPending) setShowPayment(false); }}>
-          <div className="w-full max-w-lg bg-white dark:bg-[#111113] rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={fecharPagamento}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111113] rounded-3xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/[0.06]">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Pagamento</h2>
-                <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">{curso?.titulo}</p>
+                <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5 truncate">{curso?.titulo}</p>
               </div>
-              <button onClick={() => { if (!aderirMutation.isPending) setShowPayment(false); }} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06]">
+              <button onClick={fecharPagamento} aria-label="Fechar" className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06]">
                 <X size={18} className="text-gray-400 dark:text-zinc-500" />
               </button>
             </div>
 
             <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
-                  Método de Pagamento
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {([
-                    { value: "EXPRESS" as const, label: "Express", icon: ExpressIcon },
-                    { value: "TRANSFERENCIA" as const, label: "Transferência", icon: Building2 },
-                    { value: "MULTICAIXA" as const, label: "Multicaixa", icon: MulticaixaIcon },
-                  ]).map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value} type="button" onClick={() => setMetodoPagamento(value)}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-                        metodoPagamento === value
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
-                          : "border-gray-200 dark:border-white/[0.08] hover:border-emerald-300 dark:hover:border-emerald-500/50"
-                      }`}
-                    >
-                      <Icon className={`w-[34px] h-[34px] shrink-0 ${metodoPagamento === value ? "scale-105" : "opacity-80"}`} />
-                      <span className={`text-[10px] font-bold text-center ${metodoPagamento === value ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
-                        {label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {pagamentoAtivo ? (
+                <EstadoPagamento
+                  pagamento={pagamentoAtivo}
+                  onConfirmado={pagamentoConfirmado}
+                  onFechar={fecharEstadoPagamento}
+                />
+              ) : (
+                <>
+                  <div className="flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-white/[0.03] px-4 py-3">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400">Total</span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {cursoGratuito ? "Grátis" : formatPrice(Number(curso?.preco ?? 0))}
+                    </span>
+                  </div>
 
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-2xl p-4">
-                <p className="text-xs text-amber-700 dark:text-amber-400 font-bold mb-1">
-                  Pagamento via {metodoPagamento === "EXPRESS" ? "Express" : metodoPagamento === "TRANSFERENCIA" ? "Transferência Bancária" : "Multicaixa"}
-                </p>
-                <p className="text-[10px] text-amber-600 dark:text-amber-500">
-                  {metodoPagamento === "EXPRESS"
-                    ? "Faça o pagamento para o número 923 456 789 (Express). Insira a referência abaixo."
-                    : metodoPagamento === "TRANSFERENCIA"
-                    ? "IBAN: AO06 0040 0000 1234 5678 9012 3. Envie o comprovativo após a transferência."
-                    : "Pague no Multicaixa (código 12345). Insira a referência após o pagamento."}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-600 dark:text-zinc-400">Referência *</Label>
-                  <Input value={referenciaPagamento} onChange={(e) => setReferenciaPagamento(e.target.value)} placeholder="Código da transação" className="h-11 rounded-xl bg-gray-50 dark:bg-white/[0.04]" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-600 dark:text-zinc-400">Comprovativo</Label>
-                  <label className="flex items-center gap-2 h-11 px-4 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-dashed border-gray-200 dark:border-white/[0.08] cursor-pointer hover:border-emerald-400 transition-colors">
-                    <Upload size={14} className="text-gray-400 shrink-0" />
-                    <span className="text-xs text-gray-400 truncate">{comprovativo ? comprovativo.name : "Carregar foto"}</span>
-                    <input type="file" accept="image/*,.pdf" onChange={(e) => setComprovativo(e.target.files?.[0] || null)} className="hidden" />
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
-                <Button variant="outline" onClick={() => { if (!aderirMutation.isPending) setShowPayment(false); }} disabled={aderirMutation.isPending} className="rounded-xl">
-                  Cancelar
-                </Button>
-                <Button onClick={handleAderir} disabled={aderirMutation.isPending} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
-                  {aderirMutation.isPending ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
-                  ) : (
-                    <><CreditCard className="h-4 w-4 mr-2" /> Confirmar Pagamento</>
+                  {!cursoGratuito && (
+                    <SeletorPagamento
+                      metodo={metodoPagamento}
+                      onMetodo={setMetodoPagamento}
+                      telefone={telefonePagamento}
+                      onTelefone={setTelefonePagamento}
+                    />
                   )}
-                </Button>
-              </div>
+
+                  <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
+                    <Button variant="outline" onClick={fecharPagamento} disabled={aderirMutation.isPending} className="rounded-xl dark:text-white">
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleAderir} disabled={aderirMutation.isPending} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
+                      {aderirMutation.isPending ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> A processar...</>
+                      ) : (
+                        <><CreditCard className="h-4 w-4 mr-2" /> {cursoGratuito ? "Obter curso" : metodoPagamento === "reference" ? "Gerar referência" : "Pagar"}</>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

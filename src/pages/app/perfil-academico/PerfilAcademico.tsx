@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { GraduationCap, Loader2, Save, School, BookOpen, MapPin, Globe, Calendar, Award, Heart, Briefcase, Camera, Map, Cake, Phone, User, Flag, Building2, Target, GemIcon, GalleryThumbnailsIcon } from "lucide-react";
+import { UserPageHeader } from "@/components/user-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -352,20 +353,12 @@ export function PerfilAcademicoPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#111113]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-10"
-        >
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white mb-2">
-            Perfil Académico
-          </h1>
-          <p className="text-gray-500 dark:text-zinc-400">
-            Preencha o seu perfil académico para facilitar as suas candidaturas.
-          </p>
-        </motion.div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <UserPageHeader
+          icon={BookOpen}
+          title="Perfil Académico"
+          description="Preencha o seu perfil académico para facilitar as suas candidaturas."
+        />
 
         {isLoading ? (
           <div className="flex justify-center py-20">

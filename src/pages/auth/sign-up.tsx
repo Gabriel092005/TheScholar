@@ -96,7 +96,7 @@ export function SignUp() {
 
       setIsSuccess(true);
       toast.success("Conta criada com sucesso!", {
-        description: `Bem-vindo, ${nome.split(" ")[0]}!`,
+        description: `A sua conta está pronta, ${nome.split(" ")[0]}!`,
       });
 
       await new Promise((r) => setTimeout(r, 900));
@@ -119,7 +119,7 @@ export function SignUp() {
         Cookies.set("token", demoToken, { expires: 7, path: "/" });
         await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         toast.success("Conta criada (modo demonstração)!", {
-          description: `Bem-vindo, ${nome.split(" ")[0]}!`,
+          description: `A sua conta está pronta, ${nome.split(" ")[0]}!`,
         });
         navigate("/", { replace: true });
       } else {

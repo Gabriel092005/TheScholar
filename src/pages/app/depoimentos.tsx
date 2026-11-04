@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Quote, Loader2, Send } from "lucide-react";
+import { Quote, Loader2, MessageCircle, Send } from "lucide-react";
+import { CardAccent, RatingStars, Reveal, UserPageHeader, iconTile, userCard } from "@/components/user-ui";
 import { motion } from "framer-motion";
 import { depoimentosApi, type Depoimento } from "@/api/depoimentos";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ function Stars({ count, interactive, onChange }: { count: number; interactive?: 
           ))}
         </select>
       ) : (
-        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{count}/5</span>
+        <RatingStars count={count} />
       )}
     </div>
   );
@@ -80,24 +81,18 @@ export function DepoimentosPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#111113]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
-            Depoimentos
-          </h1>
-          <p className="text-gray-500 dark:text-zinc-400 text-lg max-w-2xl mx-auto mb-8">
-            Veja o que os nossos alunos dizem sobre as suas experiências de aprendizagem.
-          </p>
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-            <Send className="h-4 w-4" />
-            {showForm ? "Cancelar" : "Deixar depoimento"}
-          </Button>
-        </motion.div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <UserPageHeader
+          icon={MessageCircle}
+          title="Depoimentos"
+          description="Veja o que os nossos alunos dizem sobre as suas experiências de aprendizagem."
+          action={
+            <Button onClick={() => setShowForm(!showForm)} className="gap-2 rounded-xl">
+              <Send className="h-4 w-4" />
+              {showForm ? "Cancelar" : "Deixar depoimento"}
+            </Button>
+          }
+        />
 
         {showForm && (
           <motion.form
@@ -160,28 +155,27 @@ export function DepoimentosPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {depoimentos.map((d, i) => (
-              <motion.div
-                key={d.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="relative p-6 sm:p-8 rounded-3xl bg-gray-50 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06]"
-              >
-                <Quote className="absolute top-4 right-4 h-8 w-8 text-emerald-200 dark:text-emerald-800/40" />
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                    {d.nome.split(" ").map(n => n[0]).join("").substring(0, 2)}
+              <Reveal key={d.id} index={i}>
+                <div className={`${userCard} flex h-full flex-col p-6`}>
+                  <CardAccent />
+                  <Quote className="absolute top-4 right-4 h-7 w-7 text-emerald-200 dark:text-emerald-800/40 transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-300" />
+                  <div className="flex items-center gap-3 mb-4 pr-8">
+                    <div className={`${iconTile} text-sm font-bold`}>
+                      {d.nome.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-gray-900 dark:text-white">{d.nome}</p>
+                      <p className="truncate text-xs text-gray-500 dark:text-zinc-400">{d.curso}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{d.nome}</p>
-                    <p className="text-xs text-gray-500 dark:text-zinc-500">{d.curso}</p>
+                  <p className="text-gray-600 dark:text-zinc-300 text-sm leading-relaxed mb-4">
+                    &ldquo;{d.texto}&rdquo;
+                  </p>
+                  <div className="mt-auto">
+                    <Stars count={d.rating} />
                   </div>
                 </div>
-                <p className="text-gray-600 dark:text-zinc-300 text-sm leading-relaxed mb-4 italic">
-                  &ldquo;{d.texto}&rdquo;
-                </p>
-                <Stars count={d.rating} />
-              </motion.div>
+              </Reveal>
             ))}
           </div>
         )}

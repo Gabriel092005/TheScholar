@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { FileText, Upload, Loader2, Clock, CheckCircle, XCircle, AlertCircle, FileUp } from "lucide-react";
+import { CardAccent, Reveal, UserPageHeader, iconTile, userCard } from "@/components/user-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,24 +83,18 @@ export function AnaliseDocumentoPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#111113]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 dark:text-white mb-4">
-            Análise de Documentos
-          </h1>
-          <p className="text-gray-500 dark:text-zinc-400 text-lg max-w-2xl mx-auto mb-8">
-            Submeta o seu documento para correção e análise pela nossa equipa.
-          </p>
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-            <Upload className="h-4 w-4" />
-            {showForm ? "Cancelar" : "Submeter Documento"}
-          </Button>
-        </motion.div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <UserPageHeader
+          icon={FileText}
+          title="Análise de Documentos"
+          description="Submeta o seu documento para correção e análise pela nossa equipa."
+          action={
+            <Button onClick={() => setShowForm(!showForm)} className="gap-2 rounded-xl">
+              <Upload className="h-4 w-4" />
+              {showForm ? "Cancelar" : "Submeter Documento"}
+            </Button>
+          }
+        />
 
         {showForm && (
           <motion.form
@@ -197,16 +192,15 @@ export function AnaliseDocumentoPage() {
         ) : (
           <div className="space-y-4">
             {analises.map((a, i) => (
-              <motion.div
-                key={a.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-                className="p-6 rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06]"
-              >
-                <div className="flex items-start justify-between gap-4">
+              <Reveal key={a.id} index={i}>
+              <div className={`${userCard} p-5 sm:p-6`}>
+                <CardAccent />
+                <div className="flex items-start gap-4">
+                  <div className={iconTile}>
+                    <FileText className="h-5 w-5" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {a.tipoDocumento === "CV" ? "Currículo (CV)" :
                          a.tipoDocumento === "CARTA_MOTIVACAO" ? "Carta de Motivação" :
@@ -231,7 +225,8 @@ export function AnaliseDocumentoPage() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
+              </Reveal>
             ))}
           </div>
         )}

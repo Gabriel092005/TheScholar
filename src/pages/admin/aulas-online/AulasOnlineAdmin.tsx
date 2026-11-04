@@ -325,7 +325,7 @@ export function AulasOnlineAdmin() {
                 className="rounded-xl dark:text-white placeholder:dark:text-zinc-500"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-gray-500 dark:text-white mb-1 block">Data</label>
                 <Input
