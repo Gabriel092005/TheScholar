@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Award, BookOpen, ChevronLeft, FileText,
-  LayoutDashboard, Loader2, LogOut, Menu, Moon, Sun, UserRound, UsersRound, Video,
+  LayoutDashboard, LogOut, Moon, Sun, UserRound, UsersRound, Video,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,11 +11,10 @@ import { VoltarAoTopo } from "@/components/voltar-ao-topo";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
+import { BarraInferior } from "@/components/barra-inferior";
 import { getUploadUrl } from "@/lib/axios";
-import logo from "@/assets/logo.jpeg";
+import { SplashLogo } from "@/components/splash-logo";
+import logo from "@/assets/logo-icone.png";
 
 const menuItems = [
   {
@@ -77,8 +75,11 @@ const menuItems = [
   },
 ];
 
-const itensDaBarra = menuItems.filter((item) => item.naBarra);
-const itensDeMais = menuItems.filter((item) => !item.naBarra);
+const itensBarra = menuItems.filter((item) => item.naBarra);
+const itensMais = [
+  ...menuItems.filter((item) => !item.naBarra),
+  { label: "Ver plataforma", href: "/", icon: ChevronLeft },
+];
 
 export function GestorLayout() {
   const { user, isLoading } = useUser();
@@ -86,7 +87,6 @@ export function GestorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [maisAberto, setMaisAberto] = useState(false);
   const hasToken = !!Cookies.get("token");
 
   if (!hasToken) return <Navigate to="/sign-in" replace />;
@@ -94,7 +94,7 @@ export function GestorLayout() {
   if (isLoading && !user) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f6f6f7] dark:bg-[#0a0a0b]">
-        <Loader2 className="h-7 w-7 animate-spin text-emerald-500" />
+        <SplashLogo />
       </div>
     );
   }
@@ -110,7 +110,6 @@ export function GestorLayout() {
   const isDark = theme === "dark";
   const estaAtivo = (href: string) =>
     location.pathname === href || location.pathname.startsWith(href + "/");
-  const maisAtivo = itensDeMais.some((item) => estaAtivo(item.href));
 
   const handleLogout = () => {
     Cookies.remove("token", { path: "/" });
@@ -126,7 +125,7 @@ export function GestorLayout() {
             <div className="size-9 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
               <img src={logo} alt="Afroscholars" className="h-full w-full object-cover" />
             </div>
-            <p className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <p className="font-marca text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Afroscholars
             </p>
           </Link>
@@ -213,7 +212,7 @@ export function GestorLayout() {
             <div className="size-8 shrink-0 overflow-hidden rounded-lg ring-1 ring-black/5 dark:ring-white/10">
               <img src={logo} alt="" className="h-full w-full object-cover" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <span className="font-marca text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Afroscholars
             </span>
           </Link>
@@ -257,103 +256,9 @@ export function GestorLayout() {
           </div>
         </ScrollArea>
 
-        <nav
-          aria-label="Navegação do gestor"
-          className="z-30 grid shrink-0 grid-cols-5 border-t border-zinc-200/70 bg-white pb-[env(safe-area-inset-bottom)] dark:border-white/[0.06] dark:bg-[#0d0d0f] lg:hidden"
-        >
-          {itensDaBarra.map((item) => {
-            const active = estaAtivo(item.href);
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium leading-none tracking-tight transition-colors ${
-                  active
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                }`}
-              >
-                <item.icon size={20} strokeWidth={active ? 2.25 : 1.75} />
-                <span className="max-w-full truncate">{item.labelCurta}</span>
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setMaisAberto(true)}
-            aria-haspopup="dialog"
-            aria-expanded={maisAberto}
-            className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium leading-none tracking-tight transition-colors ${
-              maisAtivo
-                ? "text-emerald-700 dark:text-emerald-400"
-                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            }`}
-          >
-            <Menu size={20} strokeWidth={maisAtivo ? 2.25 : 1.75} />
-            <span>Mais</span>
-          </button>
-        </nav>
+        <BarraInferior ariaLabel="Navegação do gestor" itens={itensBarra} mais={itensMais} />
       </main>
 
-      <Sheet open={maisAberto} onOpenChange={setMaisAberto}>
-        <SheetContent
-          side="bottom"
-          className="rounded-t-2xl border-zinc-200/70 bg-white p-0 pb-[env(safe-area-inset-bottom)] text-zinc-900 dark:border-white/[0.06] dark:bg-[#0d0d0f] dark:text-zinc-100"
-        >
-          <SheetHeader className="flex-row items-center gap-3 space-y-0 border-b border-zinc-100 p-4 pr-12 text-left dark:border-white/[0.06]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-400 text-xs font-bold text-emerald-950">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <SheetTitle className="truncate text-sm font-semibold">{user.nome}</SheetTitle>
-              <SheetDescription className="truncate text-xs">{user.email}</SheetDescription>
-            </div>
-          </SheetHeader>
-
-          <div className="p-2">
-            {itensDeMais.map((item) => {
-              const active = estaAtivo(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setMaisAberto(false)}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                      : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-                  }`}
-                >
-                  <item.icon size={18} />
-                  {item.label}
-                </Link>
-              );
-            })}
-            <Link
-              to="/"
-              onClick={() => setMaisAberto(false)}
-              className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-            >
-              <ChevronLeft size={18} />
-              Ver plataforma
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
-            >
-              <LogOut size={18} />
-              Terminar sessão
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

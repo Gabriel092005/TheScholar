@@ -473,7 +473,7 @@ export function WelcomePreview() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-40px" }}
                     transition={{ delay: Math.min(i, 12) * 0.05, duration: 0.45, ease: EASE }}
-                    className="w-24 sm:w-32 text-center"
+                    className="w-full max-w-[280px] sm:w-60 text-center"
                   >
                     <div className="relative mx-auto w-fit">
                       <MentorAvatar
@@ -492,6 +492,9 @@ export function WelcomePreview() {
                     </p>
                     {mentor.pais && (
                       <p className="mt-0.5 text-xs text-white/60">{mentor.pais}</p>
+                    )}
+                    {mentor.bio && (
+                      <p className="mt-2 line-clamp-6 text-xs leading-relaxed text-white/75 break-words">{mentor.bio}</p>
                     )}
                   </motion.li>
                 ))}

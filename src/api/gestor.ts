@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { headersAfiliado } from "@/lib/afiliado-ref";
 import type { Bolsa } from "./bolsas";
 import type { Curso } from "./cursos";
 import type { MetodoPagamento, PagamentoMomenu } from "./pagamentos";
@@ -163,7 +164,8 @@ export const gestorApi = {
   comprarDocumento: async (id: string, payload: { metodo: MetodoPagamento; phoneNumber?: string }) => {
     const { data } = await api.post<{ id: string; pagamento: PagamentoMomenu; message: string }>(
       `/documentos/${id}/comprar`,
-      payload
+      payload,
+      { headers: headersAfiliado("DOCUMENTO", id) }
     );
     return data;
   },

@@ -20,6 +20,7 @@ import {
   Globe,
   ChevronRight,
   Settings,
+  Share2,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -54,6 +55,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
       <SidebarLink icon={<History size={18} />} to="/minhas-atividades" active={isActive('/minhas-atividades')} label="Minhas Atividades" description="Acompanhe seu histórico de atividades" expanded={isExpanded} />
       <SidebarLink icon={<CalendarDays size={18} />} to="/minhas-consultorias" active={isActive('/minhas-consultorias')} label="Agendamentos" description="Veja e gerencie suas consultorias" expanded={isExpanded} />
       <SidebarLink icon={<Video size={18} />} to="/aulas" active={isActive('/aulas')} label="Aulas ao Vivo" description="Participe de aulas e mentorias ao vivo" expanded={isExpanded} />
+      <SidebarLink icon={<Share2 size={18} />} to="/afiliados" active={isActive('/afiliados')} label="Afiliados" description="Divulgue e ganhe comissões" expanded={isExpanded} />
     </>
   );
 

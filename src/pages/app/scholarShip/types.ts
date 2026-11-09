@@ -1,3 +1,5 @@
+import type { PacoteMentoria } from "@/lib/pacotes-mentoria";
+
 export interface Scholarship {
   id: string;
   title: string;
@@ -16,6 +18,7 @@ export interface Scholarship {
   inscriptionPrice?: number;
   consultoriaPrice?: number;
   mentoriaPrice?: number;
+  mentoriaPackages?: PacoteMentoria[] | null;
   currency?: string;
   originalPrice?: number;
   linkAplicar?: string;

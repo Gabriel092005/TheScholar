@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck, ChevronRight, Loader2, Award, GraduationCap, AlertCircle, Info, MessageCircle, Wallet, Bot } from "lucide-react";
+import { Bell, CheckCheck, ChevronRight, Loader2, Award, GraduationCap, AlertCircle, Info, MessageCircle, Wallet, Bot, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useNotificacoesSocket } from "@/hooks/useNotificacoesSocket";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { getNotifications, markAsRead, markAllAsRead, type Notification } from "@/api/notifications";
 import { gestorApi } from "@/api/gestor";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ const tipoIconMap: Record<string, React.ElementType> = {
   CURSO: GraduationCap,
   MENTORIA: MessageCircle,
   PAGAMENTO: Wallet,
+  BOLSA_COMPATIVEL: Target,
+  BOLSA_NOVA: GraduationCap,
 };
 
 const tipoColorMap: Record<string, string> = {
@@ -32,6 +35,8 @@ const tipoColorMap: Record<string, string> = {
   CURSO: "text-orange-500 bg-orange-50 dark:bg-orange-500/10",
   MENTORIA: "text-teal-500 bg-teal-50 dark:bg-teal-500/10",
   PAGAMENTO: "text-emerald-600 bg-emerald-100 dark:bg-emerald-500/15",
+  BOLSA_COMPATIVEL: "text-amber-600 bg-amber-100 dark:bg-amber-500/15",
+  BOLSA_NOVA: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10",
 };
 
 const emKwanzas = (valor: number) =>
@@ -126,6 +131,7 @@ export function NotificationBell({ userId, role }: { userId?: string; role?: str
   const eGestor = role === "ADMIN" || role === "GESTOR";
 
   useNotificacoesSocket(userId);
+  usePushNotifications(userId);
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey,
@@ -209,7 +215,7 @@ export function NotificationBell({ userId, role }: { userId?: string; role?: str
             role={role!}
             onVer={() => {
               setOpen(false);
-              navigate("/gestor/estatisticas");
+              navigate(role === "ADMIN" ? "/admin/estatisticas" : "/gestor/estatisticas");
             }}
           />
         )}
@@ -280,9 +286,11 @@ export function NotificationBell({ userId, role }: { userId?: string; role?: str
                       onClick={() => handleNotificationClick(notif)}
                       className={cn(
                         "flex w-full gap-3 px-5 py-3 text-left transition-colors duration-150 focus-visible:bg-gray-50 focus-visible:outline-none dark:focus-visible:bg-white/[0.04]",
-                        isUnread
-                          ? "bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-500/[0.03] dark:hover:bg-emerald-500/[0.06]"
-                          : "hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                        isUnread && notif.tipo === "BOLSA_COMPATIVEL"
+                          ? "border-l-4 border-amber-500 bg-amber-50 hover:bg-amber-100/70 dark:bg-amber-500/10 dark:hover:bg-amber-500/15"
+                          : isUnread
+                            ? "bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-500/[0.03] dark:hover:bg-emerald-500/[0.06]"
+                            : "hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                       )}
                     >
                       <div

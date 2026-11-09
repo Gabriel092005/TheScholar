@@ -1,3 +1,5 @@
+import { erroNosPacotes, pacotesParaEnvio, pacotesParaFormulario, type PacoteMentoriaForm } from "@/lib/pacotes-mentoria";
+import { PacotesMentoriaEditor } from "@/components/pacotes-mentoria-editor";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -33,6 +35,7 @@ interface BolsaForm {
   precoInscricao: string;
   precoConsultoria: string;
   precoMentoria: string;
+  pacotesMentoria: PacoteMentoriaForm[];
   idioma: string;
   tags: string;
   descricao: string;
@@ -45,7 +48,7 @@ interface BolsaForm {
 const emptyForm: BolsaForm = {
   titulo: "", subtitulo: "", categoria: "", instituicao: "", pais: "",
   nivel: "", requisitos: "", valor: "", moeda: "AOA", precoInscricao: "",
-  precoConsultoria: "", precoMentoria: "", idioma: "", tags: "",
+  precoConsultoria: "", precoMentoria: "", pacotesMentoria: [], idioma: "", tags: "",
   descricao: "", linkAplicar: "", prazo: "", numeroVagas: "", status: "RASCUNHO",
 };
 
@@ -70,6 +73,7 @@ function mapToForm(bolsa: BolsaGestor): BolsaForm {
     precoInscricao: bolsa.precoInscricao != null ? String(bolsa.precoInscricao) : "",
     precoConsultoria: bolsa.precoConsultoria != null ? String(bolsa.precoConsultoria) : "",
     precoMentoria: bolsa.precoMentoria != null ? String(bolsa.precoMentoria) : "",
+    pacotesMentoria: pacotesParaFormulario(bolsa.pacotesMentoria),
     idioma: bolsa.idioma || "",
     tags: (bolsa.tags || []).join(", "),
     descricao: bolsa.descricao || "",
@@ -162,10 +166,18 @@ export function GestorBolsas() {
       return;
     }
 
+    const erroPacotes = erroNosPacotes(form.pacotesMentoria, form.precoMentoria);
+    if (erroPacotes) {
+      toast.error(erroPacotes);
+      return;
+    }
+
     const fd = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
+    const { pacotesMentoria, ...campos } = form;
+    Object.entries(campos).forEach(([key, value]) => {
       if (value !== "") fd.append(key, String(value));
     });
+    fd.append("pacotesMentoria", pacotesParaEnvio(pacotesMentoria));
     if (file) fd.append("imagemBg", file);
 
     if (editingId) updateMutation.mutate({ id: editingId, payload: fd });
@@ -278,6 +290,11 @@ export function GestorBolsas() {
                         <Input className={inputClass} type="number" value={form.precoMentoria} onChange={(e) => setForm({ ...form, precoMentoria: e.target.value })} />
                       </Field>
                     </div>
+                    <PacotesMentoriaEditor
+                      precoBase={form.precoMentoria}
+                      pacotes={form.pacotesMentoria}
+                      onChange={(pacotesMentoria) => setForm({ ...form, pacotesMentoria })}
+                    />
                   </div>
                 </section>
               </div>

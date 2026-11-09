@@ -1,4 +1,23 @@
 import { api } from "@/lib/axios";
+import type { PagamentoMomenu } from "./pagamentos";
+
+export interface TipoAnalise {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  preco: number;
+  ativo: boolean;
+}
+
+export const tiposAnaliseApi = {
+  disponiveis: () => api.get<TipoAnalise[]>("/analise-documento/tipos").then((r) => r.data),
+  todos: () => api.get<TipoAnalise[]>("/admin/analise-documento/tipos").then((r) => r.data),
+  criar: (payload: { nome: string; descricao?: string; preco: number }) =>
+    api.post<TipoAnalise>("/admin/analise-documento/tipos", payload).then((r) => r.data),
+  atualizar: (id: string, payload: Partial<Pick<TipoAnalise, "nome" | "preco" | "ativo">>) =>
+    api.patch(`/admin/analise-documento/tipos/${id}`, payload).then((r) => r.data),
+  apagar: (id: string) => api.delete(`/admin/analise-documento/tipos/${id}`).then((r) => r.data),
+};
 
 export interface AnaliseDocumento {
   id: string;
@@ -9,7 +28,8 @@ export interface AnaliseDocumento {
   tipoDocumento: string;
   areaPretendida: string;
   observacao?: string;
-  status: "PENDENTE" | "EM_ANALISE" | "CONCLUIDO" | "REJEITADO";
+  status: "AGUARDANDO_PAGAMENTO" | "CANCELADO" | "PENDENTE" | "EM_ANALISE" | "CONCLUIDO" | "REJEITADO";
+  valor?: number | null;
   feedback?: string;
   arquivoUrl?: string;
   created_at: string;
@@ -19,7 +39,7 @@ export interface AnaliseDocumento {
 
 export const analiseDocumentoApi = {
   criar: async (payload: FormData) => {
-    const { data } = await api.post<{ id: string; message: string }>("/analise-documento", payload, {
+    const { data } = await api.post<{ id: string; message: string; pagamento?: PagamentoMomenu }>("/analise-documento", payload, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;

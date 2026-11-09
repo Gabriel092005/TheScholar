@@ -1,17 +1,14 @@
 import { Button } from "@/components/ui/button";
-import logo from '@/assets/logo.jpeg'
+import logo from '@/assets/logo-icone.png'
 import { Link, useLocation } from "react-router-dom";
 import {
-  Menu, X, Award, Home, Sun, Moon, GraduationCap, LogOut, ChevronDown, Users, MessageCircle, Shield, BookHeart,
+  Menu, Award, Share2, Home, Sun, Moon, GraduationCap, LogOut, ChevronDown, Users, MessageCircle, Shield, BookHeart,
   Settings, History, CalendarDays, Video, FileText, BookOpen, Newspaper, UserCheck, Globe, FolderOpen, LayoutDashboard,
 } from "lucide-react";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useUser } from "@/api/useGetProfile";
 import { getUploadUrl } from "@/lib/axios";
 import { NotificationBell } from "@/components/notification-bell";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose,
-} from "@/components/ui/sheet";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -20,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const COLORS = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-orange-500", "bg-teal-500"];
 
-const navItems = [
+export const navItems = [
   { label: "Home",                  href: "/",                    icon: Home },
   { label: "Bolsas de Estudos",     href: "/bolsas",              icon: Award },
   { label: "Entrevista IA",         href: "/entrevista",          icon: UserCheck },
@@ -34,18 +31,15 @@ const navItems = [
   { label: "Depoimentos",           href: "/depoimentos",         icon: MessageCircle },
   { label: "Análise de Documentos", href: "/analise-documento",   icon: FileText },
   { label: "Documentos",            href: "/documentos",          icon: FolderOpen },
+  { label: "Afiliados",             href: "/afiliados",           icon: Share2 },
   { label: "Perfil Académico",      href: "/perfil-academico",    icon: BookOpen },
   { label: "Destaques",             href: "/novidades",           icon: Newspaper },
   { label: "Configurações",         href: "/settings",            icon: Settings },
 ];
 
 export function Header({
-  sidebarOpen,
-  setSidebarOpen,
   semMenu = false,
 }: {
-  sidebarOpen?: boolean;
-  setSidebarOpen?: (v: boolean) => void;
   semMenu?: boolean;
 }) {
   const { theme, setTheme } = useTheme();
@@ -69,10 +63,8 @@ export function Header({
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900 dark:bg-white/10 transition-colors group-hover:bg-gray-700 dark:group-hover:bg-white/20 overflow-hidden">
-              <img src={logo} alt="Logo" className="h-full w-full object-cover" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white transition-colors">
+            <img src={logo} alt="Logo" className="h-9 w-9 object-contain" />
+            <span className="font-marca text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-colors">
               Afroscholars
             </span>
           </Link>
@@ -258,100 +250,19 @@ export function Header({
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            {semMenu ? (
-              !user && !isLoading && (
-                <Link
-                  to="/sign-in"
-                  className="flex h-9 items-center rounded-lg bg-emerald-500 px-3 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
-                >
-                  Login
-                </Link>
-              )
-            ) : (
-              <button
-                className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
-                onClick={() => setSidebarOpen?.(!sidebarOpen)}
-                aria-label="Toggle menu"
+            {user && <NotificationBell userId={user.id} role={user.role} />}
+            {!user && !isLoading && (
+              <Link
+                to="/sign-in"
+                className="flex h-9 items-center rounded-lg bg-emerald-500 px-3 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
               >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+                Login
+              </Link>
             )}
           </div>
         </div>
       </header>
 
-      <Sheet open={!semMenu && sidebarOpen} onOpenChange={(open) => setSidebarOpen?.(open)}>
-        <SheetContent side="left" className="w-72 p-0 bg-white dark:bg-[#111113]">
-          <SheetHeader className="px-5 py-4 border-b border-gray-100 dark:border-white/[0.06]">
-            <SheetTitle className="text-left text-base font-semibold">Menu</SheetTitle>
-          </SheetHeader>
-          <nav className="flex flex-col p-3 gap-0.5 overflow-y-auto pb-24 max-h-[calc(100vh-64px)]">
-            {navItems.map(({ label, href, icon: Icon }) => {
-              const isActive = location.pathname === href || location.pathname.startsWith(href + "/");
-              return (
-                <SheetClose asChild key={label}>
-                  <Link
-                    to={href}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors ${
-                      isActive
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                        : "text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </Link>
-                </SheetClose>
-              );
-            })}
-            {user?.role === "ADMIN" && (
-              <>
-                <div className="h-px bg-gray-100 dark:bg-white/[0.06] my-1" />
-                <SheetClose asChild>
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                  >
-                    <Shield className="h-4 w-4" />
-                    Painel Admin
-                  </Link>
-                </SheetClose>
-              </>
-            )}
-            {(user?.role === "ADMIN" || user?.role === "GESTOR") && (
-              <SheetClose asChild>
-                <Link
-                  to="/gestor/estatisticas"
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  Painel do Gestor
-                </Link>
-              </SheetClose>
-            )}
-          </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-white/[0.06]">
-            {user ? (
-              <button
-                onClick={() => { setSidebarOpen?.(false); handleLogout(); }}
-                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                Terminar sessão
-              </button>
-            ) : (
-              <SheetClose asChild>
-                <Link
-                  to="/sign-in"
-                  className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors"
-                >
-                  Login
-                </Link>
-              </SheetClose>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

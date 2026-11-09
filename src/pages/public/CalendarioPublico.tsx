@@ -76,7 +76,7 @@ export function CalendarioPublico() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header sidebarOpen={false} setSidebarOpen={() => {}} />
+      <Header />
 
       <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-emerald-900 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.08),transparent_50%)]" />

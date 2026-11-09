@@ -24,6 +24,10 @@ self.addEventListener('push', (event) => {
       badge: '/icons/pwa-64x64.png',
       tag: data.tag,
       data: { url: data.url || '/' },
+      requireInteraction: !!data.destaque,
+      renotify: !!(data.destaque && data.tag),
+      vibrate: data.destaque ? [300, 100, 300, 100, 600] : undefined,
+      actions: data.destaque ? [{ action: 'ver', title: 'Ver bolsa' }] : [],
     })
   );
 });

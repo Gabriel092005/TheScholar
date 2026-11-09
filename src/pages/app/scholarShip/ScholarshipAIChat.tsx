@@ -144,7 +144,7 @@ export function ScholarshipAIChat({ bolsaId, bolsaTitulo, global }: Props) {
   return (
     <>
       {/* Floating button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-20 right-4 z-40 lg:bottom-6 lg:right-6">
         <button
           onClick={() => setOpen(true)}
           className="w-14 h-14 rounded-full
@@ -186,7 +186,7 @@ export function ScholarshipAIChat({ bolsaId, bolsaTitulo, global }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)]
+            className="fixed bottom-36 right-4 lg:bottom-24 lg:right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100dvh-13rem)] lg:max-h-[calc(100vh-8rem)]
               flex flex-col rounded-2xl overflow-hidden
               border border-gray-200 dark:border-white/[0.08]
               bg-white dark:bg-[#111113]

@@ -87,7 +87,7 @@ export function PwaStatus() {
       )}
 
       {(evento || mostrarIos) && (
-        <div className="fixed inset-x-3 bottom-3 z-[60] flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-xl dark:border-white/[0.08] dark:bg-[#111113] sm:left-auto sm:right-4 sm:w-96">
+        <div className="fixed inset-x-3 bottom-20 lg:bottom-3 z-[60] flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-xl dark:border-white/[0.08] dark:bg-[#111113] sm:left-auto sm:right-4 sm:w-96">
           <img src="/icons/pwa-64x64.png" alt="" className="h-10 w-10 shrink-0 rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Instalar a Afroscholars</p>

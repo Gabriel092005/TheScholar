@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader, faintText, inputClass, primaryButton, selectClass, softText, surface } from "./ui";
 
-const BIO_MAX = 2000;
+const BIO_MAX = 200;
 
 export function GestorPerfil() {
   const { user, isLoading } = useUser();
@@ -85,13 +85,14 @@ export function GestorPerfil() {
 
   const initials = user.nome?.substring(0, 2).toUpperCase() || "ME";
   const avatarSrc = preview || (user.image_path ? getUploadUrl(`/uploads/${user.image_path}`) : "");
+  const bioLonga = bio.trim().length > BIO_MAX;
   const changed = bio.trim() !== (user.bio ?? "").trim() || pais !== (user.paisMentoria ?? "");
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Perfil do mentor"
-        description="Configure a sua fotografia e a descrição que será apresentada aos alunos."
+        description="Configure a sua fotografia e a biografia curta apresentada no quadro de mentores."
       />
 
       <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
@@ -191,21 +192,26 @@ export function GestorPerfil() {
             <div>
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500 dark:text-zinc-400">
-                  Descrição sobre o mentor
+                  Biografia curta
                 </label>
-                <span className={`text-[10px] ${faintText}`}>
+                <span className={`text-[10px] ${bioLonga ? "font-semibold text-red-600 dark:text-red-400" : faintText}`}>
                   {bio.length}/{BIO_MAX}
                 </span>
               </div>
               <Textarea
                 value={bio}
-                onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
-                rows={6}
-                placeholder="Escreva uma breve descrição sobre a sua experiência, formação e áreas de especialidade..."
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={Math.max(BIO_MAX, bio.length)}
+                rows={4}
+                placeholder="Ex.: Mestre em Engenharia pela Universidade do Porto. Ajudo estudantes a preparar candidaturas a bolsas na Europa."
                 className="mt-1.5 resize-none rounded-xl border-zinc-200/80 bg-white text-sm dark:border-white/[0.08] dark:bg-white/[0.03]"
               />
               <p className={`mt-1.5 text-[11px] ${softText}`}>
-                Esta descrição ajuda os alunos a conhecer melhor o seu percurso.
+                {!bio.trim()
+                  ? "Ainda não tem biografia. Escreva algumas linhas para os visitantes o conhecerem."
+                  : bioLonga
+                    ? `Reduza o texto para ${BIO_MAX} caracteres para poder guardar.`
+                    : "Aparece junto ao seu nome no quadro público de mentores."}
               </p>
             </div>
           </div>
@@ -214,7 +220,7 @@ export function GestorPerfil() {
             <Button
               type="button"
               onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !changed}
+              disabled={saveMutation.isPending || !changed || bioLonga}
               className={`${primaryButton} h-10 px-5 text-[13px]`}
             >
               {saveMutation.isPending ? (

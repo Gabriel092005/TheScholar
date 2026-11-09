@@ -5,6 +5,7 @@ export interface Mentor {
   nome: string;
   imagem: string | null;
   pais: string | null;
+  bio: string | null;
 }
 
 export const mentoresApi = {

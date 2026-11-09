@@ -24,6 +24,16 @@ export function useNotificacoesSocket(usuarioId?: string) {
       qc.invalidateQueries({ queryKey: ['minhas-inscricoes'] });
       qc.invalidateQueries({ queryKey: ['gestor'] });
 
+      if (notificacao.tipo === 'BOLSA_COMPATIVEL') {
+        toast.success(notificacao.titulo, {
+          description: notificacao.conteudo,
+          duration: Infinity,
+          closeButton: true,
+          action: { label: 'Ver bolsa', onClick: () => window.location.assign(notificacao.link) },
+        });
+        return;
+      }
+
       const mostrar = notificacao.tipo === 'ERRO' ? toast.error : notificacao.tipo === 'INFO' ? toast.info : toast.success;
       mostrar(notificacao.titulo, {
         description: notificacao.conteudo,

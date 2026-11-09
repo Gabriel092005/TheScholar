@@ -25,6 +25,7 @@ import { getUploadUrl } from "@/lib/axios";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import type { Scholarship } from "./types";
+import { duracaoEmTexto, opcoesMentoria } from "@/lib/pacotes-mentoria";
 
 
 function formatPrice(value: number, _currency?: string): string {
@@ -49,6 +50,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
   const [inscricaoError, setInscricaoError] = useState<string | null>(null);
   const [inscricaoSuccess, setInscricaoSuccess] = useState(false);
   const [tipoInteresse, setTipoInteresse] = useState<TipoInteresse | null>(null);
+  const [mesesMentoria, setMesesMentoria] = useState(1);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -107,11 +109,17 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
     }
   }, [jaInscrito, mentoriaAte, tipoInteresse]);
 
+  const pacotesDisponiveis = useMemo(
+    () => opcoesMentoria(scholarship.mentoriaPrice, scholarship.mentoriaPackages),
+    [scholarship.mentoriaPrice, scholarship.mentoriaPackages]
+  );
+  const pacoteEscolhido = pacotesDisponiveis.find((p) => p.meses === mesesMentoria) ?? pacotesDisponiveis[0];
+
   const valorServico =
     tipoInteresse === "CONSULTORIA"
       ? CONSULTORIA_PRECO
       : tipoInteresse === "MENTORIA"
-      ? scholarship.mentoriaPrice
+      ? pacoteEscolhido?.valor
       : scholarship.inscriptionPrice;
   const servicoGratuito = valorServico !== undefined && valorServico <= 0;
 
@@ -128,6 +136,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       payload.append("nome", nome);
       payload.append("email", email);
       payload.append("telefone", telefone);
+      if (tipoInteresse === "MENTORIA" && pacoteEscolhido) {
+        payload.append("mesesMentoria", String(pacoteEscolhido.meses));
+      }
       if (!servicoGratuito) {
         payload.append("metodoPagamento", metodoPagamento);
         if (metodoPagamento === "momenu-mcx") {
@@ -213,10 +224,10 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       servicos.push({ value: "CONSULTORIA", icon: MessageSquare, titulo: "Consultoria", preco: formatPrice(CONSULTORIA_PRECO, scholarship.currency), sub: "Sessão de 60 minutos" });
     }
     if (scholarship.mentoriaPrice !== undefined && !mentoriaAte) {
-      servicos.push({ value: "MENTORIA", icon: Users, titulo: "Mentoria", preco: formatPrice(scholarship.mentoriaPrice, scholarship.currency) });
+      servicos.push({ value: "MENTORIA", icon: Users, titulo: "Mentoria", preco: formatPrice(scholarship.mentoriaPrice, scholarship.currency), sub: pacotesDisponiveis.length > 1 ? pacotesDisponiveis.map((p) => `${duracaoEmTexto(p.meses)}: ${formatPrice(p.valor, scholarship.currency)}`).join(" · ") : "1 mês de acesso" });
     }
     return servicos;
-  }, [scholarship, jaInscrito, mentoriaAte]);
+  }, [scholarship, jaInscrito, mentoriaAte, pacotesDisponiveis]);
 
   const abrirFormulario = (tipo?: TipoInteresse) => {
     if (isDemoToken) {
@@ -876,6 +887,39 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                           {formatPrice(CONSULTORIA_PRECO, scholarship.currency)}
                         </span>
                       </div>
+                    )}
+
+                    {tipoInteresse === "MENTORIA" && pacotesDisponiveis.length > 1 && (
+                      <fieldset className="mb-4 space-y-2">
+                        <legend className="mb-2 text-xs font-medium text-gray-600 dark:text-zinc-400">Duração do acesso</legend>
+                        {pacotesDisponiveis.map((pacote) => {
+                          const escolhido = pacote.meses === pacoteEscolhido?.meses;
+                          return (
+                            <label
+                              key={pacote.meses}
+                              className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition-colors ${
+                                escolhido
+                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                                  : "border-gray-200 hover:border-emerald-300 dark:border-white/[0.08]"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2.5 text-sm font-medium text-gray-900 dark:text-white">
+                                <input
+                                  type="radio"
+                                  name="pacote-mentoria"
+                                  checked={escolhido}
+                                  onChange={() => setMesesMentoria(pacote.meses)}
+                                  className="h-4 w-4 accent-emerald-500"
+                                />
+                                {duracaoEmTexto(pacote.meses)}
+                              </span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                {formatPrice(pacote.valor, scholarship.currency)}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </fieldset>
                     )}
 
                     {servicoGratuito ? (

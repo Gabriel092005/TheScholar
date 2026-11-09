@@ -1,5 +1,8 @@
 import { api } from "@/lib/axios";
+import { headersAfiliado } from "@/lib/afiliado-ref";
 import type { PagamentoMomenu } from "./pagamentos";
+
+import type { PacoteMentoria } from "@/lib/pacotes-mentoria";
 
 export interface Bolsa {
   id: string;
@@ -16,6 +19,7 @@ export interface Bolsa {
   precoInscricao?: number;
   precoConsultoria?: number;
   precoMentoria?: number;
+  pacotesMentoria?: PacoteMentoria[] | null;
   idioma?: string;
   tags: string[];
   descricao?: string;
@@ -107,7 +111,7 @@ export const bolsasApi = {
 
   inscribir: async (id: string, payload: FormData) => {
     const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/bolsas/${id}/inscrever`, payload, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": "multipart/form-data", ...headersAfiliado("BOLSA", id) },
     });
     return data;
   },

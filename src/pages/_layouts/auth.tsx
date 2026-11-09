@@ -1,6 +1,6 @@
 import { Link, Outlet } from "react-router-dom";
 import { Award, FileText, Video } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo-icone.png";
 
 const destaques = [
   { icon: Award, texto: "Encontre bolsas de estudo e acompanhe as suas candidaturas" },
@@ -12,7 +12,7 @@ function Marca({ claro = false }: { claro?: boolean }) {
   return (
     <Link to="/" className="inline-flex items-center gap-2.5">
       <img src={logo} alt="" className="h-9 w-9 rounded-lg object-cover" />
-      <span className={`text-lg font-semibold tracking-tight ${claro ? "text-white" : "text-gray-900 dark:text-white"}`}>
+      <span className={`font-marca text-lg font-bold tracking-tight ${claro ? "text-white" : "text-gray-900 dark:text-white"}`}>
         Afroscholars
       </span>
     </Link>

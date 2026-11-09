@@ -64,6 +64,7 @@ function mapBolsaToScholarship(bolsa: Bolsa) {
     inscriptionPrice: bolsa.precoInscricao ?? undefined,
     consultoriaPrice: bolsa.precoConsultoria ?? undefined,
     mentoriaPrice: bolsa.precoMentoria ?? undefined,
+    mentoriaPackages: bolsa.pacotesMentoria,
     currency: "AOA",
     originalPrice: bolsa.precoOriginal ?? undefined,
   };

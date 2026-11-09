@@ -12,7 +12,7 @@ export default defineConfig({
       short_name: 'Afroscholars',
       description: 'Plataforma de bolsas de estudo para estudantes africanos',
       theme_color: '#059669',
-      background_color: '#059669',
+      background_color: '#ffffff',
       display: 'standalone',
       lang: 'pt',
       id: '/',

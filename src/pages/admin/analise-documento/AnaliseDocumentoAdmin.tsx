@@ -14,7 +14,8 @@ import {
 import { analiseDocumentoApi, type AnaliseDocumento } from "@/api/analise-documento";
 import { api, getUploadUrl } from "@/lib/axios";
 import { fragmentedRow, fragmentedTable } from "@/components/admin/admin-ui";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { TiposAnaliseConfig } from "./TiposAnaliseConfig";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
   PENDENTE: { label: "Pendente", class: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" },
@@ -63,7 +64,8 @@ export function AnaliseDocumentoAdmin() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
+      <TiposAnaliseConfig />
       <div className="bg-white dark:bg-[#111113] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden">
         <div className="p-5 border-b border-gray-100 dark:border-white/[0.06] flex items-center justify-between">
           <div>

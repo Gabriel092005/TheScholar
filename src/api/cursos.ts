@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { headersAfiliado } from "@/lib/afiliado-ref";
 import type { MetodoPagamento, PagamentoMomenu } from "./pagamentos";
 
 export interface Curso {
@@ -119,7 +120,9 @@ export const cursosApi = {
   },
 
   aderir: async (id: string, payload?: { metodo?: MetodoPagamento; phoneNumber?: string }) => {
-    const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/cursos/${id}/aderir`, payload);
+    const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/cursos/${id}/aderir`, payload, {
+      headers: headersAfiliado("CURSO", id),
+    });
     return data;
   },
 

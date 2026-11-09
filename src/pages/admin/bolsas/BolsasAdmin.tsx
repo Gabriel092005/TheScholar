@@ -1,3 +1,5 @@
+import { erroNosPacotes, pacotesParaEnvio, pacotesParaFormulario, type PacoteMentoriaForm } from "@/lib/pacotes-mentoria";
+import { PacotesMentoriaEditor } from "@/components/pacotes-mentoria-editor";
 import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +32,10 @@ interface ScholarshipForm {
   descricao: string;
   tags: string[];
   status: "ativa" | "inativa";
+  precoInscricao: string;
+  precoConsultoria: string;
+  precoMentoria: string;
+  pacotesMentoria: PacoteMentoriaForm[];
   prazo: string;
   numeroVagas: number | null;
   imagemBg: string;
@@ -40,6 +46,7 @@ const emptyForm: ScholarshipForm = {
   pais: "", niveis: [],
   requisitos: [""], descricao: "", tags: [],
   status: "ativa", prazo: "", numeroVagas: null, imagemBg: "",
+  precoInscricao: "", precoConsultoria: "", precoMentoria: "", pacotesMentoria: [],
 };
 
 const levels = ["GRADUACAO", "MESTRADO", "DOUTORAMENTO", "MBA", "POSGRADUACAO"];
@@ -75,6 +82,10 @@ function mapBolsaToForm(bolsa: Bolsa): ScholarshipForm {
     descricao: bolsa.descricao || "",
     tags: bolsa.tags || [],
     status: bolsa.status === "PUBLICADA" ? "ativa" : "inativa",
+    precoInscricao: bolsa.precoInscricao != null ? String(bolsa.precoInscricao) : "",
+    precoConsultoria: bolsa.precoConsultoria != null ? String(bolsa.precoConsultoria) : "",
+    precoMentoria: bolsa.precoMentoria != null ? String(bolsa.precoMentoria) : "",
+    pacotesMentoria: pacotesParaFormulario(bolsa.pacotesMentoria),
     prazo: bolsa.prazo ? String(bolsa.prazo).slice(0, 10) : "",
     numeroVagas: bolsa.numeroVagas ?? null,
     imagemBg: bolsa.imagemBg || "",
@@ -154,6 +165,12 @@ export function BolsasAdmin() {
   });
 
   const handleSave = () => {
+    const erroPacotes = erroNosPacotes(form.pacotesMentoria, form.precoMentoria);
+    if (erroPacotes) {
+      toast.error(erroPacotes);
+      return;
+    }
+
     const payload: Record<string, any> = {
       titulo: form.titulo,
       subtitulo: form.subtitulo || undefined,
@@ -166,12 +183,17 @@ export function BolsasAdmin() {
       status: form.status === "ativa" ? "PUBLICADA" : "INATIVA",
       prazo: form.prazo || undefined,
       numeroVagas: form.numeroVagas != null ? String(form.numeroVagas) : undefined,
+      // Vazio retira o serviço da bolsa.
+      precoInscricao: form.precoInscricao,
+      precoConsultoria: form.precoConsultoria,
+      precoMentoria: form.precoMentoria,
+      pacotesMentoria: pacotesParaEnvio(form.pacotesMentoria),
     };
 
     if (imagemBgFile) {
       const fd = new FormData();
       Object.entries(payload).forEach(([key, val]) => {
-        if (val !== undefined && val !== "") fd.append(key, String(val));
+        if (val !== undefined && (val !== "" || key.startsWith("preco"))) fd.append(key, String(val));
       });
       fd.append("imagemBg", imagemBgFile);
       if (editingId) {
@@ -577,6 +599,53 @@ export function BolsasAdmin() {
                 </div>
 
                 {renderRequisitos()}
+
+                <fieldset className="bg-gray-50 dark:bg-white/[0.06] rounded-xl p-4">
+                  <legend className="font-medium text-gray-900 dark:text-white">Serviços da bolsa</legend>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mb-4">
+                    Só aparecem ao utilizador os serviços configurados aqui. Deixe o preço vazio para não oferecer; 0 torna o serviço gratuito.
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="preco-inscricao" className="text-gray-700 dark:text-zinc-300">Inscrição (Kz)</Label>
+                      <Input
+                        id="preco-inscricao"
+                        type="number"
+                        min="0"
+                        value={form.precoInscricao}
+                        onChange={(e) => setForm({ ...form, precoInscricao: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="preco-mentoria" className="text-gray-700 dark:text-zinc-300">Mentoria (Kz)</Label>
+                      <Input
+                        id="preco-mentoria"
+                        type="number"
+                        min="0"
+                        value={form.precoMentoria}
+                        onChange={(e) => setForm({ ...form, precoMentoria: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <PacotesMentoriaEditor
+                      precoBase={form.precoMentoria}
+                      pacotes={form.pacotesMentoria}
+                      onChange={(pacotesMentoria) => setForm({ ...form, pacotesMentoria })}
+                    />
+                  </div>
+                  <label className="mt-4 flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={form.precoConsultoria !== ""}
+                      onChange={(e) => setForm({ ...form, precoConsultoria: e.target.checked ? "5000" : "" })}
+                      className="h-4 w-4 accent-emerald-500"
+                    />
+                    Oferecer consultoria (5.000 Kz por sessão)
+                  </label>
+                </fieldset>
               </div>
 
               <div className="space-y-6">

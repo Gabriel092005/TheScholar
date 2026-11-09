@@ -25,7 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo-icone.png";
 
 export type SidebarBadgeTone = "emerald" | "blue" | "amber";
 
@@ -257,7 +257,7 @@ export function AdminSidebar({
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight text-gray-900 dark:text-white">
+              <p className="truncate font-marca text-sm font-bold leading-tight tracking-tight text-gray-900 dark:text-white">
                 {brand.name}
               </p>
               {brand.tagline && (

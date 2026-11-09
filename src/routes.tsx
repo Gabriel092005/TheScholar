@@ -1,6 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthLayout }      from './pages/_layouts/auth';
 import { RootGate }        from './pages/app/RootGate';
+import { AfiliadosPage }   from './pages/app/afiliados/AfiliadosPage';
+import { AfiliadoRedirect } from './pages/app/afiliados/AfiliadoRedirect';
+import { AfiliadosAdmin }  from './pages/admin/afiliados/AfiliadosAdmin';
 import { SignIn }          from './pages/auth/Sign-in';
 import { SignUp }          from './pages/auth/sign-up';
 import { ForgotPassword }  from './pages/auth/ForgotPassword';
@@ -63,6 +66,7 @@ import { GestorPerfil } from './pages/gestor/GestorPerfil';
 
 
 export const router = createBrowserRouter([
+  { path: '/r/:codigo', element: <AfiliadoRedirect /> },
 
   {
     path: '/',
@@ -91,6 +95,7 @@ export const router = createBrowserRouter([
       { path: 'aulas',                         element: <AulasOnlinePage /> },
       { path: 'aulas/:id',                     element: <AulaOnlineRoomPage /> },
       { path: 'documentos',                    element: <DocumentosPage /> },
+      { path: 'afiliados',                     element: <AfiliadosPage /> },
 
     ],
   },
@@ -128,6 +133,7 @@ export const router = createBrowserRouter([
       { path: 'analise-documento', element: <AnaliseDocumentoAdmin /> },
       { path: 'aulas-online', element: <AulasOnlineAdmin /> },
       { path: 'banners', element: <HomeBannersAdmin /> },
+      { path: 'afiliados', element: <AfiliadosAdmin /> },
       { path: 'atividades', element: <AtividadesAdmin /> },
       { path: 'mapa-global', element: <MapaGlobalAdmin /> },
     ],

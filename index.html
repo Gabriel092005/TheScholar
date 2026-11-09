@@ -2,7 +2,7 @@
 <html lang="pt" class="">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" id="theme-color" content="#059669" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -11,7 +11,20 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180x180.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
     <title>Afroscholars</title>
+    <style>
+      .splash { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: #fff; }
+      .splash img { width: 6rem; height: 6rem; animation: splash-respirar 1.1s ease-in-out infinite alternate; }
+      html.dark .splash { background: hsl(240 1% 7%); }
+      @keyframes splash-respirar {
+        from { transform: translateY(4px) scale(0.94); opacity: 0.8; }
+        to { transform: translateY(-4px) scale(1.04); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .splash img { animation: none; }
+      }
+    </style>
     <script>
       (function() {
         var theme = localStorage.getItem("vite-ui-theme");
@@ -22,7 +35,11 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="splash" role="status" aria-label="A carregar">
+        <img src="/splash-icone.png" alt="" />
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
