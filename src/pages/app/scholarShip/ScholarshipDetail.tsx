@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useUser } from "@/api/useGetProfile";
 import { CardAccent, Reveal, iconTile, userCard } from "@/components/user-ui";
 import { EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
@@ -529,13 +530,15 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       </div>
 
       {/* ─── INSCRIPTION DRAWER ─── */}
+      {/* Portal para o body: fora do ScrollArea/overflow do layout e acima da barra inferior. */}
+      {createPortal(
       <AnimatePresence>
         {showForm && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-md"
             onClick={() => setShowForm(false)}
           >
           <motion.div
@@ -543,14 +546,14 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-[100dvh] w-full max-w-xl bg-white dark:bg-[#111113] shadow-2xl"
+            className="absolute inset-y-0 right-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-xl flex-col bg-white dark:bg-[#111113] shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Formulário de inscrição"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex h-full min-h-0 flex-col">
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/[0.06] shrink-0 relative">
+            <div className="flex min-h-0 flex-1 flex-col">
+                <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5 border-b border-gray-100 dark:border-white/[0.06] shrink-0 relative">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400" />
                   <div>
                     <h2 className="text-base font-bold text-gray-900 dark:text-white">Inscrição</h2>
@@ -566,7 +569,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                 </div>
 
                 <ScrollArea className="min-h-0 flex-1 [&>[data-radix-scroll-area-viewport]]:overscroll-contain">
-                <div className="px-6 py-6">
+                <div className="px-4 py-5 sm:px-6 sm:py-6">
                   <div className="space-y-7">
                   {/* STEP 0: Tipo de Interesse */}
                   <section>
@@ -940,7 +943,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                 </ScrollArea>
 
                 {inscricaoError && (
-                  <div className="px-6 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-100 dark:border-red-900/40 shrink-0">
+                  <div className="px-4 sm:px-6 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-100 dark:border-red-900/40 shrink-0">
                     <p className="text-xs text-red-600 dark:text-red-400 text-center font-medium flex items-center justify-center gap-2">
                       <AlertTriangle className="h-3.5 w-3.5" />
                       {inscricaoError}
@@ -948,18 +951,18 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-[#0e0e10] shrink-0">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-4 sm:px-6 pt-3 sm:pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-[#0e0e10] shrink-0">
                   <Button
                     variant="outline"
                     onClick={() => setShowForm(false)}
-                    className="rounded-xl border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white h-11"
+                    className="w-full sm:w-auto rounded-xl border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white h-11"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleInscrever}
                     disabled={inscricao.isPending || !tipoInteresse}
-                    className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-6 h-11 shadow-lg shadow-emerald-600/25"
+                    className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-6 h-12 sm:h-11 text-[15px] sm:text-sm shadow-lg shadow-emerald-600/25"
                   >
                     {inscricao.isPending ? (
                       <>
@@ -998,11 +1001,13 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
 
-      {pagamentoAtivo && (
+      {pagamentoAtivo && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-6">
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-5 sm:p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Pagamento</h3>
             <EstadoPagamento
               pagamento={pagamentoAtivo}
@@ -1010,7 +1015,8 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
               onFechar={fecharEstadoPagamento}
             />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
     </div>

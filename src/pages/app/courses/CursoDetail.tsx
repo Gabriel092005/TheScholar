@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -536,10 +537,10 @@ export function CursoDetail() {
       </div>
 
       {/* Payment Dialog */}
-      {showPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={fecharPagamento}>
-          <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/[0.06]">
+      {showPayment && createPortal(
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={fecharPagamento}>
+          <div className="w-full max-w-lg max-h-[92dvh] sm:max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-t-3xl sm:rounded-3xl shadow-2xl pb-[env(safe-area-inset-bottom)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-gray-100 dark:border-white/[0.06]">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Pagamento</h2>
                 <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5 truncate">{curso?.titulo}</p>
@@ -549,7 +550,7 @@ export function CursoDetail() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6">
               {pagamentoAtivo ? (
                 <EstadoPagamento
                   pagamento={pagamentoAtivo}
@@ -574,11 +575,11 @@ export function CursoDetail() {
                     />
                   )}
 
-                  <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
-                    <Button variant="outline" onClick={fecharPagamento} disabled={aderirMutation.isPending} className="rounded-xl dark:text-white">
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
+                    <Button variant="outline" onClick={fecharPagamento} disabled={aderirMutation.isPending} className="w-full sm:w-auto h-11 rounded-xl dark:text-white">
                       Cancelar
                     </Button>
-                    <Button onClick={handleAderir} disabled={aderirMutation.isPending} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
+                    <Button onClick={handleAderir} disabled={aderirMutation.isPending} className="w-full sm:w-auto h-12 sm:h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
                       {aderirMutation.isPending ? (
                         <><Loader2 className="h-4 w-4 animate-spin mr-2" /> A processar...</>
                       ) : (
@@ -590,7 +591,8 @@ export function CursoDetail() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
