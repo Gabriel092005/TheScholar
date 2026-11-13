@@ -50,7 +50,7 @@ export function BarraInferior({
     <>
       <nav
         aria-label={ariaLabel}
-        className="z-30 grid shrink-0 grid-cols-5 border-t border-zinc-200/70 bg-white pb-[env(safe-area-inset-bottom)] dark:border-white/[0.06] dark:bg-[#0d0d0f] lg:hidden"
+        className="z-30 grid shrink-0 grid-cols-5 [body:has([role=dialog])_&]:hidden border-t border-zinc-200/70 bg-white pb-[env(safe-area-inset-bottom)] dark:border-white/[0.06] dark:bg-[#0d0d0f] lg:hidden"
       >
         {itens.map((item) => {
           const ativo = item.href === hrefAtivo;

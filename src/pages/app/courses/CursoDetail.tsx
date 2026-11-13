@@ -539,7 +539,7 @@ export function CursoDetail() {
       {/* Payment Dialog */}
       {showPayment && createPortal(
         <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={fecharPagamento}>
-          <div className="w-full max-w-lg max-h-[92dvh] sm:max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-t-3xl sm:rounded-3xl shadow-2xl pb-[env(safe-area-inset-bottom)]" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label="Pagamento" className="w-full max-w-lg max-h-[92dvh] sm:max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-t-3xl sm:rounded-3xl shadow-2xl pb-[env(safe-area-inset-bottom)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-gray-100 dark:border-white/[0.06]">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Pagamento</h2>

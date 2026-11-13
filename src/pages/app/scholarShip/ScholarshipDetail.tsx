@@ -1007,7 +1007,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
 
       {pagamentoAtivo && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-5 sm:p-6">
+          <div role="dialog" aria-modal="true" aria-label="Estado do pagamento" className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-5 sm:p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Pagamento</h3>
             <EstadoPagamento
               pagamento={pagamentoAtivo}
