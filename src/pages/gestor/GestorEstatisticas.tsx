@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Award, BookOpen, FileText, Loader2, Wallet, PlusCircle } from "lucide-react";
+import { Award, BookOpen, FileText, Loader2, PlusCircle } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -8,6 +8,7 @@ import {
 import { gestorApi } from "@/api/gestor";
 import { PageHeader, SectionCard, StatCard, softText, faintText } from "./ui";
 import { Button } from "@/components/ui/button";
+import { CartaoFaturacao } from "@/components/cartao-faturacao";
 
 const PIE_COLORS = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5", "#a1a1aa"];
 
@@ -21,6 +22,11 @@ export function GestorEstatisticas() {
   const { data, isLoading } = useQuery({
     queryKey: ["gestor-dashboard"],
     queryFn: gestorApi.getDashboard,
+  });
+
+  const { data: faturacao } = useQuery({
+    queryKey: ["gestor", "faturacao"],
+    queryFn: gestorApi.getFaturacao,
   });
 
   const navigate = useNavigate();
@@ -60,32 +66,36 @@ export function GestorEstatisticas() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard
-          label="Bolsas publicadas"
-          value={m.bolsasPublicadas}
-          hint={`de ${m.bolsasTotal} criadas`}
-          icon={Award}
-          highlight
-        />
-        <StatCard
-          label="Cursos publicados"
-          value={m.cursosPublicados}
-          hint={`de ${m.cursosTotal} criados`}
-          icon={BookOpen}
-        />
-        <StatCard
-          label="Inscrições"
-          value={m.inscricoesTotal}
-          hint={`${m.inscricoesPendentes} pendentes`}
-          icon={FileText}
-        />
-        <StatCard
-          label="Receita total"
-          value={formatCurrency(m.receitaTotal)}
-          hint="bolsas + cursos + documentos"
-          icon={Wallet}
-        />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <div className="lg:col-span-5 xl:col-span-4">
+          <CartaoFaturacao
+            rotulo="Faturação total"
+            valor={formatCurrency(m.receitaTotal)}
+            titular={nomeMentor || "Gestor"}
+            valorMes={faturacao ? formatCurrency(faturacao.mes) : undefined}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:col-span-7 xl:col-span-8">
+          <StatCard
+            label="Bolsas publicadas"
+            value={m.bolsasPublicadas}
+            hint={`de ${m.bolsasTotal} criadas`}
+            icon={Award}
+            highlight
+          />
+          <StatCard
+            label="Cursos publicados"
+            value={m.cursosPublicados}
+            hint={`de ${m.cursosTotal} criados`}
+            icon={BookOpen}
+          />
+          <StatCard
+            label="Inscrições"
+            value={m.inscricoesTotal}
+            hint={`${m.inscricoesPendentes} pendentes`}
+            icon={FileText}
+          />
+        </div>
       </div>
 
       <SectionCard>

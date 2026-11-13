@@ -543,13 +543,13 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-full w-full max-w-xl bg-white dark:bg-[#111113] shadow-2xl"
+            className="absolute right-0 top-0 h-[100dvh] w-full max-w-xl bg-white dark:bg-[#111113] shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Formulário de inscrição"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col h-full">
+            <div className="flex h-full min-h-0 flex-col">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/[0.06] shrink-0 relative">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400" />
                   <div>
@@ -565,7 +565,8 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   </button>
                 </div>
 
-                <ScrollArea className="flex-1 px-6 py-6">
+                <ScrollArea className="min-h-0 flex-1 [&>[data-radix-scroll-area-viewport]]:overscroll-contain">
+                <div className="px-6 py-6">
                   <div className="space-y-7">
                   {/* STEP 0: Tipo de Interesse */}
                   <section>
@@ -935,6 +936,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   </section>
                   )}
                 </div>
+                </div>
                 </ScrollArea>
 
                 {inscricaoError && (
@@ -946,7 +948,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-[#0e0e10] shrink-0">
+                <div className="flex items-center justify-between gap-3 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-[#0e0e10] shrink-0">
                   <Button
                     variant="outline"
                     onClick={() => setShowForm(false)}
@@ -1000,7 +1002,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
 
       {pagamentoAtivo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-6">
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Pagamento</h3>
             <EstadoPagamento
               pagamento={pagamentoAtivo}

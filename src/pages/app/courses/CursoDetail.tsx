@@ -538,7 +538,7 @@ export function CursoDetail() {
       {/* Payment Dialog */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={fecharPagamento}>
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111113] rounded-3xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111113] rounded-3xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/[0.06]">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Pagamento</h2>

@@ -9,7 +9,6 @@ import {
   GraduationCap,
   TrendingUp,
   Loader2,
-  Wallet,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -29,6 +28,7 @@ import {
 import { adminApi } from "@/api/admin";
 import { useUser } from "@/api/useGetProfile";
 import { cn } from "@/lib/utils";
+import { CartaoFaturacao } from "@/components/cartao-faturacao";
 import { ReceitaGestoresPanel } from "./ReceitaGestoresPanel";
 import {
   AdminPageHeader,
@@ -150,13 +150,11 @@ export function EstatisticasAdmin() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="flex flex-col gap-3 lg:col-span-4">
-          <KpiTile
-            accent
-            label="Faturação total"
-            value={formatCurrency(receita?.total ?? data.receitaTotal)}
-            hint={`${formatCurrency(receita?.mes ?? 0)} este mês · mentorias, bolsas e cursos`}
-            icon={Wallet}
-            className="min-h-[168px]"
+          <CartaoFaturacao
+            rotulo="Faturação total"
+            valor={formatCurrency(receita?.total ?? data.receitaTotal)}
+            titular={user?.nome ?? "Administração"}
+            valorMes={formatCurrency(receita?.mes ?? 0)}
           />
           <div className="grid grid-cols-2 gap-3">
             <KpiTile
