@@ -4,7 +4,7 @@ export interface Usuario {
   id: string;
   nome: string;
   email: string;
-  role: "ADMIN" | "GESTOR" | "USUARIO";
+  role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO";
   estado_conta: "ACTIVA" | "INACTIVA";
   image_path: string | null;
   phone: string | null;
@@ -36,7 +36,7 @@ export const usuariosApi = {
     return data;
   },
 
-  alterarRole: async (userId: string, role: "ADMIN" | "GESTOR" | "USUARIO") => {
+  alterarRole: async (userId: string, role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO") => {
     const { data } = await api.patch<Usuario>(`/admin/usuarios/${userId}/role`, { role });
     return data;
   },

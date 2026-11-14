@@ -29,6 +29,7 @@ export function VerifyMagicLink() {
         setTimeout(() => {
           if (res.user.role === "ADMIN") navigate("/admin", { replace: true });
           else if (res.user.role === "GESTOR") navigate("/gestor/estatisticas", { replace: true });
+          else if (res.user.role === "ATENDIMENTO") navigate("/atendimento", { replace: true });
           else navigate("/", { replace: true });
         }, 1500);
       })

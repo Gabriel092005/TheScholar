@@ -27,6 +27,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import type { Scholarship } from "./types";
 import { duracaoEmTexto, opcoesMentoria } from "@/lib/pacotes-mentoria";
+import { BotaoVideosDaPagina } from "@/components/videos-explicativos";
 
 
 function formatPrice(value: number, _currency?: string): string {
@@ -95,6 +96,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
   });
   const jaInscrito = !!meuEstado?.inscrito;
   const mentoriaAte = meuEstado?.mentoriaExpiraEm ?? null;
+  const acessoMonitor = !!meuEstado?.monitor;
 
   const atualizarEstado = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["bolsa-estado", bolsaId] });
@@ -431,7 +433,9 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                     {mentoriaAte && (
                       <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
-                        Mentoria ativa até {new Date(mentoriaAte).toLocaleDateString("pt-PT")}
+                        {acessoMonitor
+                          ? "Acesso de monitor: tem acesso a todo o conteúdo da mentoria"
+                          : `Mentoria ativa até ${new Date(mentoriaAte).toLocaleDateString("pt-PT")}`}
                       </p>
                     )}
                   </div>
@@ -439,9 +443,12 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
 
                 {servicosDisponiveis.length > 0 && (
                   <div className="mb-5">
-                    <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                      {jaInscrito || mentoriaAte ? "Outros serviços" : "Como podemos ajudar"}
-                    </h2>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {jaInscrito || mentoriaAte ? "Outros serviços" : "Como podemos ajudar"}
+                      </h2>
+                      <BotaoVideosDaPagina local="MENTORIA" />
+                    </div>
                     <div className="space-y-2">
                       {servicosDisponiveis.map(({ value, icon: Icon, titulo, preco, sub }) => (
                         <button

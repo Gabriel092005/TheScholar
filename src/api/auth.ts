@@ -5,7 +5,7 @@ export interface User {
   id: string;
   nome: string;
   email: string;
-  role: "ADMIN" | "GESTOR" | "USUARIO";
+  role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO";
   image_path: string | null;
   bio?: string | null;
   paisMentoria?: string | null;
@@ -100,7 +100,7 @@ export async function getProfileDemo(): Promise<User> {
       id: "demo-id",
       nome: payload.nome || payload.sub?.split("@")[0] || "Usuário Demo",
       email: payload.sub || "usuario@demo.com",
-      role: (payload.role as "ADMIN" | "GESTOR" | "USUARIO") || "USUARIO",
+      role: (payload.role as "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO") || "USUARIO",
       image_path: null,
       bio: null,
       estado_conta: "ACTIVA",

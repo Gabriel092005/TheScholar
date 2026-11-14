@@ -16,6 +16,10 @@ import { ComunidadesPage } from './pages/app/comunidades/index';
 import { ComunidadeChatPage } from './pages/app/comunidades/[id]';
 import { DepoimentosPage } from './pages/app/depoimentos';
 import { HistoriasPage } from './pages/app/historias';
+import { CrmPage } from './pages/app/crm/CrmPage';
+import { ComoFuncionaPage } from './pages/app/como-funciona';
+import { VideosAdmin } from './pages/admin/videos/VideosAdmin';
+import { AtendimentoLayout, CrmRedirect } from './pages/_layouts/atendimento';
 import { MinhasAtividadesPage } from './pages/app/minhas-atividades';
 import { CalendarioConsultorias } from './pages/app/consultorias/CalendarioConsultorias';
 import { CalendarioPublico } from './pages/public/CalendarioPublico';
@@ -36,6 +40,8 @@ import { AulaOnlineRoomPage } from './pages/app/aulas/[id]';
 import { DocumentosPage } from './pages/app/documentos';
 
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AtendimentoAdmin } from './pages/admin/atendimento/AtendimentoAdmin';
+import { FunilAdmin } from './pages/admin/funil/FunilAdmin';
 import { BolsasAdmin } from './pages/admin/bolsas/BolsasAdmin';
 import { InscricoesAdmin } from './pages/admin/bolsas/InscricoesAdmin';
 import { ConsultoriaAdmin } from './pages/admin/bolsas/ConsultoriaAdmin';
@@ -85,10 +91,12 @@ export const router = createBrowserRouter([
       { path: 'comunidades',                   element: <ComunidadesPage /> },
       { path: 'comunidades/:id',               element: <ComunidadeChatPage /> },
       { path: 'minhas-atividades',             element: <MinhasAtividadesPage /> },
+      { path: 'crm',                           element: <CrmRedirect /> },
       { path: 'minhas-consultorias',           element: <CalendarioConsultorias /> },
       { path: 'depoimentos',                   element: <DepoimentosPage /> },
       { path: 'historias',                     element: <HistoriasPage /> },
       { path: 'novidades',                     element: <NovidadesPage /> },
+      { path: 'como-funciona',                 element: <ComoFuncionaPage /> },
       { path: 'novidades/:id',                 element: <NovidadeDetailPage /> },
       { path: 'analise-documento',             element: <AnaliseDocumentoPage /> },
       { path: 'perfil-academico',              element: <PerfilAcademicoPage /> },
@@ -126,8 +134,12 @@ export const router = createBrowserRouter([
       { path: 'cursos/pagamentos', element: <PagamentosAdmin /> },
       { path: 'estatisticas', element: <EstatisticasAdmin /> },
       { path: 'novidades', element: <NovidadesAdmin /> },
+      { path: 'videos', element: <VideosAdmin /> },
       { path: 'comunidades', element: <ComunidadesAdmin /> },
       { path: 'usuarios', element: <UsuariosAdmin /> },
+      { path: 'atendimento', element: <AtendimentoAdmin /> },
+      { path: 'funil', element: <FunilAdmin /> },
+      { path: 'crm', element: <CrmPage /> },
       { path: 'gestores', element: <GestoresAdmin /> },
       { path: 'depoimentos', element: <DepoimentosAdmin /> },
       { path: 'analise-documento', element: <AnaliseDocumentoAdmin /> },
@@ -140,6 +152,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Gestor ────────────────────────────────────────────────
+  {
+    path: '/atendimento',
+    element: <AtendimentoLayout />,
+    children: [{ index: true, element: <CrmPage /> }],
+  },
   {
     path: '/gestor',
     element: <GestorLayout />,

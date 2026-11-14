@@ -34,6 +34,7 @@ export const navItems = [
   { label: "Afiliados",             href: "/afiliados",           icon: Share2 },
   { label: "Perfil Académico",      href: "/perfil-academico",    icon: BookOpen },
   { label: "Destaques",             href: "/novidades",           icon: Newspaper },
+  { label: "Como funciona",         href: "/como-funciona",       icon: Video },
   { label: "Configurações",         href: "/settings",            icon: Settings },
 ];
 

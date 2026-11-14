@@ -20,6 +20,7 @@ import {
   MessageCircle,
   FileText,
   Video,
+  Clapperboard,
   Image as ImageIcon,
   BookHeart,
   Globe,
@@ -28,6 +29,10 @@ import {
   CalendarClock,
   LayoutDashboard,
   Share2,
+  Headset,
+  School,
+  MailCheck,
+  Contact,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,6 +86,7 @@ const NAV_GROUPS: SidebarMenuGroup[] = [
     items: [
       { label: "Aulas ao Vivo", href: "/admin/aulas-online", icon: Video, description: "Sessões em tempo real" },
       { label: "Destaques", href: "/admin/novidades", icon: Newspaper, description: "Novidades da plataforma" },
+      { label: "Vídeos explicativos", href: "/admin/videos", icon: Clapperboard, description: "Tutoriais da plataforma" },
       { label: "Banners Home", href: "/admin/banners", icon: ImageIcon, description: "Destaques da homepage" },
       { label: "Atividades", href: "/admin/atividades", icon: CalendarClock, description: "Calendário e eventos" },
       { label: "Mapa Global", href: "/admin/mapa-global", icon: Globe, description: "Presença internacional" },
@@ -101,6 +107,10 @@ const NAV_GROUPS: SidebarMenuGroup[] = [
       { label: "Entrevista IA", href: "/entrevista", icon: UserCheck, description: "Simulação inteligente" },
       { label: "Proficiência EN", href: "/proficiencia", icon: Globe, description: "Testes de inglês" },
       { label: "Utilizadores", href: "/admin/usuarios", icon: User, description: "Contas e permissões" },
+      { label: "Monitores", href: "/admin/usuarios?papel=MONITOR", icon: School, description: "Acesso de mentoria a todas as bolsas" },
+      { label: "CRM", href: "/admin/crm", icon: Contact, description: "Leads e contactos da equipa" },
+      { label: "Atendimento", href: "/admin/atendimento", icon: Headset, description: "Vendas canceladas e contactos" },
+      { label: "Funil de emails", href: "/admin/funil", icon: MailCheck, description: "Gatilhos diários de vendas" },
       { label: "Gestores & Mentores", href: "/admin/gestores", icon: Shield, description: "Equipa de gestão e formadores" },
     ],
   },
@@ -115,6 +125,10 @@ const ROTULOS_DA_BARRA: Record<string, string> = {
 
 const GESTOR_RESTRICTED = [
   "/admin/usuarios",
+  "/admin/atendimento",
+  "/admin/crm",
+  "/admin/funil",
+  "/admin/videos",
   "/admin/cursos/pagamentos",
   "/admin/consultoria",
   "/admin/mentoria",
@@ -125,8 +139,10 @@ const GESTOR_RESTRICTED = [
   "/admin/mapa-global",
 ];
 
-const isRestrictedForGestor = (href: string) =>
-  GESTOR_RESTRICTED.some((path) => href === path || href.startsWith(`${path}/`));
+const isRestrictedForGestor = (href: string) => {
+  const caminho = href.split("?")[0];
+  return GESTOR_RESTRICTED.some((path) => caminho === path || caminho.startsWith(`${path}/`));
+};
 
 export function AdminDashboard() {
   const { theme, setTheme } = useTheme();
@@ -154,11 +170,14 @@ export function AdminDashboard() {
   );
 
   const activeHref = useMemo(() => {
-    const matches = visibleMenuItems.filter(
-      (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`),
+    // Itens com filtro na query (ex.: Monitores) só acendem com essa query exata.
+    const matches = visibleMenuItems.filter((item) =>
+      item.href.includes("?")
+        ? location.pathname + location.search === item.href
+        : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`),
     );
     return matches.sort((a, b) => b.href.length - a.href.length)[0]?.href;
-  }, [location.pathname, visibleMenuItems]);
+  }, [location.pathname, location.search, visibleMenuItems]);
 
   if (!user && !hasToken) {
     return <Navigate to="/sign-in" replace />;

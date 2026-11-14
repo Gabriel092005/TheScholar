@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { pagamentosApi, type MetodoPagamento, type PagamentoMomenu } from "@/api/pagamentos";
+import { BotaoVideosDaPagina } from "@/components/videos-explicativos";
 
 const INTERVALO_ESTADO_MS = 5000;
 
@@ -54,6 +55,7 @@ export function SeletorPagamento({
 
   return (
     <div className="space-y-4">
+      <BotaoVideosDaPagina local="PAGAMENTOS" />
       <div className="grid grid-cols-2 gap-3">
         {METODOS.map(({ value, label, icon: Icon }) => (
           <button

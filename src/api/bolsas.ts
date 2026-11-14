@@ -117,7 +117,7 @@ export const bolsasApi = {
   },
 
   meuEstado: async (id: string) => {
-    const { data } = await api.get<{ inscrito: boolean; mentoriaExpiraEm: string | null }>(`/bolsas/${id}/meu-estado`);
+    const { data } = await api.get<{ inscrito: boolean; mentoriaExpiraEm: string | null; monitor?: boolean }>(`/bolsas/${id}/meu-estado`);
     return data;
   },
 

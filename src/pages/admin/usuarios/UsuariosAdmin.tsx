@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  Headset,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  MessageCircle,
   MoreHorizontal,
+  Phone,
   Search,
   Shield,
   ShieldCheck,
   Trash2,
+  GraduationCap,
   User,
   UserCheck,
   UserX,
@@ -26,6 +31,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usuariosApi } from "@/api/usuarios";
+import { numeroWhatsapp } from "@/api/crm";
 import { AdminPageHeader, adminSurface } from "@/components/admin/admin-ui";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -34,18 +40,24 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
   GESTOR: "Gestor",
   USUARIO: "Utilizador",
+  MONITOR: "Monitor",
+  ATENDIMENTO: "Atendimento",
 };
 
 const ROLE_ICONS: Record<string, LucideIcon> = {
   ADMIN: ShieldCheck,
   GESTOR: Shield,
   USUARIO: User,
+  MONITOR: GraduationCap,
+  ATENDIMENTO: Headset,
 };
 
 const ROLE_PILLS: Record<string, string> = {
   ADMIN: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
   GESTOR: "bg-teal-50 text-teal-700 ring-1 ring-teal-200/70 dark:bg-teal-500/10 dark:text-teal-300 dark:ring-teal-500/20",
   USUARIO: "bg-gray-100 text-gray-600 ring-1 ring-gray-200/70 dark:bg-white/[0.05] dark:text-zinc-300 dark:ring-white/10",
+  MONITOR: "bg-sky-50 text-sky-700 ring-1 ring-sky-200/70 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20",
+  ATENDIMENTO: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
 };
 
 const ROLE_TABS = [
@@ -53,9 +65,11 @@ const ROLE_TABS = [
   { value: "ADMIN", label: "Admins" },
   { value: "GESTOR", label: "Gestores" },
   { value: "USUARIO", label: "Utilizadores" },
+  { value: "MONITOR", label: "Monitores" },
+  { value: "ATENDIMENTO", label: "Atendimento" },
 ] as const;
 
-const ROLES = ["ADMIN", "GESTOR", "USUARIO"] as const;
+const ROLES = ["ADMIN", "GESTOR", "USUARIO", "MONITOR", "ATENDIMENTO"] as const;
 
 type StatTone = "emerald" | "teal" | "amber" | "rose";
 
@@ -109,9 +123,16 @@ function formatDate(value?: string | null) {
 export function UsuariosAdmin() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [filterRole, setFilterRole] = useState("todas");
+  // ?papel=MONITOR (atalho do menu) abre a lista já filtrada.
+  const [searchParams] = useSearchParams();
+  const papelNaUrl = searchParams.get("papel") ?? "todas";
+  const [filterRole, setFilterRole] = useState(papelNaUrl);
   const [filterEstado, setFilterEstado] = useState("todas");
   const [page, setPage] = useState(1);
+  useEffect(() => {
+    setFilterRole(papelNaUrl);
+    setPage(1);
+  }, [papelNaUrl]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-usuarios", search, filterRole, filterEstado, page],
@@ -139,7 +160,7 @@ export function UsuariosAdmin() {
   };
 
   const alterarRoleMutation = useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: "ADMIN" | "GESTOR" | "USUARIO" }) =>
+    mutationFn: ({ userId, role }: { userId: string; role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO" }) =>
       usuariosApi.alterarRole(userId, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
@@ -197,20 +218,20 @@ export function UsuariosAdmin() {
             <Input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Pesquisar por nome ou email..."
+              placeholder="Pesquisar por nome, email ou telefone..."
               className="h-10 rounded-xl border-gray-200/80 bg-gray-50/70 pl-10 text-sm dark:border-white/[0.07] dark:bg-white/[0.03]"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-0.5 rounded-xl bg-gray-100/70 p-1 dark:bg-white/[0.04]">
+            <div className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl bg-gray-100/70 p-1 dark:bg-white/[0.04]">
               {ROLE_TABS.map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   onClick={() => { setFilterRole(tab.value); setPage(1); }}
                   className={cn(
-                    "rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all",
+                    "shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all",
                     filterRole === tab.value
                       ? "bg-white text-emerald-600 shadow-sm dark:bg-white/[0.09] dark:text-emerald-400"
                       : "text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white",
@@ -304,6 +325,32 @@ export function UsuariosAdmin() {
                             <p className="truncate text-[11px] text-gray-400 dark:text-zinc-500">
                               {user.email}
                             </p>
+                            {user.phone ? (
+                              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                                <a
+                                  href={`tel:${user.phone.replace(/\s/g, "")}`}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-600 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400"
+                                  title="Ligar"
+                                >
+                                  <Phone size={11} />
+                                  {user.phone}
+                                </a>
+                                {numeroWhatsapp(user.phone) && (
+                                  <a
+                                    href={`https://wa.me/${numeroWhatsapp(user.phone)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                    title="Abrir no WhatsApp"
+                                  >
+                                    <MessageCircle size={10} />
+                                    WhatsApp
+                                  </a>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="mt-0.5 text-[11px] italic text-gray-300 dark:text-zinc-600">Sem telefone</p>
+                            )}
                           </div>
                         </div>
                       </td>

@@ -13,7 +13,7 @@ import { env } from "@/env";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface MyTokenPayload {
-  role: "ADMIN" | "GESTOR" | "USUARIO";
+  role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO";
   sub: string;
   exp: number;
 }
@@ -128,6 +128,8 @@ export function SignIn() {
             navigate("/admin", { replace: true });
           } else if (decoded.role === "GESTOR") {
             navigate("/gestor/estatisticas", { replace: true });
+          } else if (decoded.role === "ATENDIMENTO") {
+            navigate("/atendimento", { replace: true });
           } else {
             navigate("/", { replace: true });
           }
@@ -192,6 +194,8 @@ export function SignIn() {
         navigate("/admin", { replace: true });
       } else if (response.user.role === "GESTOR") {
         navigate("/gestor/estatisticas", { replace: true });
+      } else if (response.user.role === "ATENDIMENTO") {
+        navigate("/atendimento", { replace: true });
       } else {
         navigate("/", { replace: true });
       }

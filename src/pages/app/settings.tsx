@@ -523,7 +523,7 @@ export function SettingsPage() {
         {/* Account */}
         <SectionCard icon={Shield} title="Conta" description="Gerir o acesso à sua conta">
           <div className="space-y-1">
-            <SettingRow label="Tipo de conta" description={user?.role === "ADMIN" ? "Administrador" : user?.role === "GESTOR" ? "Gestor" : "Usuário"}>
+            <SettingRow label="Tipo de conta" description={user?.role === "ADMIN" ? "Administrador" : user?.role === "GESTOR" ? "Gestor" : user?.role === "MONITOR" ? "Monitor" : user?.role === "ATENDIMENTO" ? "Atendimento" : "Usuário"}>
               <span className={cn(
                 "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg",
                 user?.role === "ADMIN"

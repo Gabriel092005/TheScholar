@@ -127,7 +127,7 @@ export function GestoresAdmin() {
   };
 
   const alterarRoleMutation = useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: "ADMIN" | "GESTOR" | "USUARIO" }) =>
+    mutationFn: ({ userId, role }: { userId: string; role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO" }) =>
       usuariosApi.alterarRole(userId, role),
     onSuccess: () => {
       invalidate();

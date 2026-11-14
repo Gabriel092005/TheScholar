@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
 
 interface MyTokenPayload {
-  role: "ADMIN" | "GESTOR" | "USUARIO";
+  role: "ADMIN" | "GESTOR" | "USUARIO" | "MONITOR" | "ATENDIMENTO";
   sub: string;
   exp: number;
 }
@@ -45,6 +45,8 @@ export function GoogleCallback() {
           navigate("/admin", { replace: true });
         } else if (decoded.role === "GESTOR") {
           navigate("/gestor/estatisticas", { replace: true });
+        } else if (decoded.role === "ATENDIMENTO") {
+          navigate("/atendimento", { replace: true });
         } else {
           navigate("/", { replace: true });
         }

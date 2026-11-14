@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { LayoutDashboard, Shield } from "lucide-react";
+import { Headset, LayoutDashboard, Shield } from "lucide-react";
 import { BarraInferior } from "@/components/barra-inferior";
 import { Header, navItems } from "@/components/header";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -72,6 +72,7 @@ export function AppLayoutAdmin() {
             .map((item) => ({ ...item, labelCurta: ROTULOS_DA_BARRA[item.href] }))}
           mais={[
             ...navItems.filter((item) => !ROTULOS_DA_BARRA[item.href]),
+            ...(user?.role === "ATENDIMENTO" || user?.role === "ADMIN" ? [{ label: "CRM", href: user?.role === "ADMIN" ? "/admin/crm" : "/atendimento", icon: Headset }] : []),
             ...(user?.role === "ADMIN" ? [{ label: "Painel Admin", href: "/admin", icon: Shield }] : []),
             ...(user?.role === "ADMIN" || user?.role === "GESTOR"
               ? [{ label: "Painel do Gestor", href: "/gestor/estatisticas", icon: LayoutDashboard }]

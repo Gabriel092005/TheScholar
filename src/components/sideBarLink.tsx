@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Settings,
   Share2,
+  Headset,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -72,6 +73,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
       <SidebarLink icon={<FileText size={18} />} to="/analise-documento" active={isActive('/analise-documento')} label="Análise de Documentos" description="Envie documentos para análise" expanded={isExpanded} />
       <SidebarLink icon={<BookOpen size={18} />} to="/perfil-academico" active={isActive('/perfil-academico')} label="Perfil Académico" description="Organize seu currículo e conquistas" expanded={isExpanded} />
       <SidebarLink icon={<Newspaper size={18} />} to="/novidades" active={isActive('/novidades')} label="Destaques" description="Fique por dentro das novidades" expanded={isExpanded} />
+      <SidebarLink icon={<Video size={18} />} to="/como-funciona" active={isActive('/como-funciona')} label="Como funciona" description="Vídeos explicativos da plataforma" expanded={isExpanded} />
       <SidebarLink icon={<Settings size={18} />} to="/settings" active={isActive('/settings')} label="Configurações" description="Gerencie a sua conta e preferências" expanded={isExpanded} />
     </>
   );
@@ -119,6 +121,22 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen?: boolean; s
           <SidebarGroup title="Principal" children={mainLinks(isExpanded)} isExpanded={isExpanded} />
           <SidebarGroup title="Comunidade" children={communityLinks(isExpanded)} isExpanded={isExpanded} />
           <SidebarGroup title="Ferramentas" children={toolsLinks(isExpanded)} isExpanded={isExpanded} />
+          {(user?.role === "ATENDIMENTO" || user?.role === "ADMIN") && (
+            <SidebarGroup
+              title="Vendas"
+              isExpanded={isExpanded}
+              children={
+                <SidebarLink
+                  icon={<Headset size={18} />}
+                  to={user?.role === "ADMIN" ? "/admin/crm" : "/atendimento"}
+                  active={false}
+                  label="CRM"
+                  description="Clientes para contactar hoje"
+                  expanded={isExpanded}
+                />
+              }
+            />
+          )}
           {user?.role === "ADMIN" && (
             <SidebarGroup
               title="Administração"
