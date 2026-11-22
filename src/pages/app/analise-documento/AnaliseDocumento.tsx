@@ -11,8 +11,9 @@ import { useUser } from "@/api/useGetProfile";
 import { analiseDocumentoApi, tiposAnaliseApi } from "@/api/analise-documento";
 import type { MetodoPagamento, PagamentoMomenu } from "@/api/pagamentos";
 import {
-  EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido,
+  EstadoPagamento, SeletorPagamento, cupomCobreTudo, normalizarTelefone, telefoneValido,
 } from "@/components/pagamento-momenu";
+import type { CupomAplicado } from "@/api/cupons";
 import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; class: string; icon: React.ReactNode }> = {
@@ -48,6 +49,7 @@ export function AnaliseDocumentoPage() {
   const [metodo, setMetodo] = useState<MetodoPagamento>("momenu-mcx");
   const [telefonePagamento, setTelefonePagamento] = useState("");
   const [pagamento, setPagamento] = useState<PagamentoMomenu | null>(null);
+  const [cupom, setCupom] = useState<CupomAplicado | null>(null);
 
   const { data: analises = [], isLoading } = useQuery({
     queryKey: ["minhas-analises"],
@@ -74,6 +76,7 @@ export function AnaliseDocumentoPage() {
     setObservacao("");
     setSelecionados({});
     setTelefonePagamento("");
+    setCupom(null);
   };
 
   const criarMutation = useMutation({
@@ -122,7 +125,8 @@ export function AnaliseDocumentoPage() {
       toast.error("Envie um ficheiro para cada documento selecionado");
       return;
     }
-    if (metodo === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
+    const gratuitoComCupom = cupomCobreTudo(cupom);
+    if (!gratuitoComCupom && metodo === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
       toast.error("Indique um telefone válido com 9 dígitos, a começar por 9.");
       return;
     }
@@ -133,8 +137,11 @@ export function AnaliseDocumentoPage() {
     formData.append("areaPretendida", areaPretendida);
     if (telefone) formData.append("telefone", telefone);
     if (observacao) formData.append("observacao", observacao);
-    formData.append("metodoPagamento", metodo);
-    if (metodo === "momenu-mcx") formData.append("phoneNumber", normalizarTelefone(telefonePagamento));
+    if (!gratuitoComCupom) {
+      formData.append("metodoPagamento", metodo);
+      if (metodo === "momenu-mcx") formData.append("phoneNumber", normalizarTelefone(telefonePagamento));
+    }
+    if (cupom) formData.append("cupom", cupom.codigo);
     // A API emparelha cada tipoId com o ficheiro na mesma posição.
     for (const id of idsSelecionados) {
       formData.append("tipoId", id);
@@ -272,20 +279,23 @@ export function AnaliseDocumentoPage() {
                 <>
                   <div className="flex items-center justify-between rounded-2xl bg-white dark:bg-white/[0.03] px-4 py-3">
                     <span className="text-sm text-gray-500 dark:text-zinc-400">Total</span>
-                    <span className="font-bold text-gray-900 dark:text-white">{emKz(total)}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {cupom ? (cupomCobreTudo(cupom) ? "Grátis" : emKz(cupom.valorFinal)) : emKz(total)}
+                    </span>
                   </div>
                   <SeletorPagamento
                     metodo={metodo}
                     onMetodo={setMetodo}
                     telefone={telefonePagamento}
                     onTelefone={setTelefonePagamento}
+                    cupom={{ tipo: "ANALISE", itemId: "analise-documento", valor: total, aplicado: cupom, onAplicado: setCupom }}
                   />
                 </>
               )}
 
               <Button type="submit" disabled={criarMutation.isPending || tipos.length === 0} className="w-full gap-2">
                 {criarMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {criarMutation.isPending ? "A processar..." : metodo === "reference" ? "Gerar referência" : "Pagar e enviar"}
+                {criarMutation.isPending ? "A processar..." : cupomCobreTudo(cupom) ? "Enviar" : metodo === "reference" ? "Gerar referência" : "Pagar e enviar"}
               </Button>
             </div>
           </motion.form>

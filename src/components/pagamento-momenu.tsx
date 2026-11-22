@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, Copy, Loader2 } from "lucide-react";
+import { isAxiosError } from "axios";
+import { AlertTriangle, CheckCircle2, Copy, Loader2, TicketPercent, X } from "lucide-react";
 import { toast } from "sonner";
 import { ExpressIcon, MulticaixaIcon } from "@/components/payment-icons";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { pagamentosApi, type MetodoPagamento, type PagamentoMomenu } from "@/api/pagamentos";
 import { BotaoVideosDaPagina } from "@/components/videos-explicativos";
+import { cuponsApi, type CupomAplicado, type TipoPagamentoCupom } from "@/api/cupons";
 
 const INTERVALO_ESTADO_MS = 5000;
 
@@ -40,22 +42,174 @@ const METODOS: { value: MetodoPagamento; label: string; icon: React.ElementType;
   },
 ];
 
+export type ContextoCupom = {
+  tipo: TipoPagamentoCupom;
+  itemId: string;
+  /** Preço antes do desconto, só para mostrar: o servidor recalcula. */
+  valor: number;
+  aplicado: CupomAplicado | null;
+  onAplicado: (cupom: CupomAplicado | null) => void;
+};
+
+/** O cupão cobre o preço todo: não há nada a pagar pela MoMenu. */
+export const cupomCobreTudo = (cupom: CupomAplicado | null | undefined) => !!cupom && cupom.valorFinal <= 0;
+
+function mensagemErro(erro: unknown, padrao: string) {
+  if (isAxiosError(erro)) return (erro.response?.data as { message?: string } | undefined)?.message ?? padrao;
+  return padrao;
+}
+
+export function CampoCupom({ tipo, itemId, valor, aplicado, onAplicado }: ContextoCupom) {
+  const [aberto, setAberto] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [aValidar, setAValidar] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  // O preço mudou (ex.: outro pacote): o desconto tem de ser recalculado.
+  const codigoAplicado = aplicado?.codigo;
+  const valorAplicado = aplicado?.valorOriginal;
+  useEffect(() => {
+    if (!codigoAplicado || valorAplicado === valor) return;
+    let cancelado = false;
+    cuponsApi
+      .validar({ codigo: codigoAplicado, tipo, itemId, valor })
+      .then((c) => !cancelado && onAplicado(c))
+      .catch((e) => {
+        if (cancelado) return;
+        onAplicado(null);
+        toast.error(mensagemErro(e, "O cupão deixou de ser válido para este valor."));
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [codigoAplicado, valorAplicado, valor, tipo, itemId, onAplicado]);
+
+  const aplicar = async () => {
+    if (!codigo.trim()) return;
+    setAValidar(true);
+    setErro(null);
+    try {
+      const cupom = await cuponsApi.validar({ codigo, tipo, itemId, valor });
+      onAplicado(cupom);
+      setCodigo("");
+      setAberto(false);
+      toast.success(`Cupão ${cupom.codigo} aplicado`);
+    } catch (e) {
+      setErro(mensagemErro(e, "Não foi possível validar o cupão."));
+    } finally {
+      setAValidar(false);
+    }
+  };
+
+  if (aplicado) {
+    return (
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              <TicketPercent className="h-4 w-4 shrink-0" />
+              Cupão {aplicado.codigo}
+              {aplicado.percentagem ? ` (-${aplicado.percentagem}%)` : ""}
+            </p>
+            <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">
+              <span className="line-through">{formatarValor(aplicado.valorOriginal)}</span>
+              {"  "}−{formatarValor(aplicado.desconto)}
+            </p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              {cupomCobreTudo(aplicado) ? "Gratuito com este cupão" : `Total: ${formatarValor(aplicado.valorFinal)}`}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onAplicado(null)}
+            aria-label="Remover cupão"
+            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-white hover:text-red-500 dark:hover:bg-white/[0.06]"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!aberto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAberto(true)}
+        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+      >
+        <TicketPercent className="h-4 w-4" /> Tenho um cupão de desconto
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="cupom-pagamento" className="text-xs text-gray-600 dark:text-zinc-400">
+        Cupão de desconto
+      </Label>
+      <div className="flex gap-2">
+        <Input
+          id="cupom-pagamento"
+          value={codigo}
+          autoFocus
+          maxLength={40}
+          onChange={(e) => {
+            setCodigo(e.target.value.toUpperCase());
+            setErro(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void aplicar();
+            }
+          }}
+          placeholder="EX: BEMVINDO10"
+          className="h-11 rounded-xl bg-gray-50 uppercase dark:bg-white/[0.04]"
+        />
+        <Button
+          type="button"
+          onClick={() => void aplicar()}
+          disabled={aValidar || !codigo.trim()}
+          className="h-11 rounded-xl bg-emerald-600 px-4 font-bold text-white hover:bg-emerald-500"
+        >
+          {aValidar ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
+        </Button>
+      </div>
+      {erro && <p className="text-xs text-red-600 dark:text-red-400" role="alert">{erro}</p>}
+    </div>
+  );
+}
+
 export function SeletorPagamento({
   metodo,
   onMetodo,
   telefone,
   onTelefone,
+  cupom,
 }: {
   metodo: MetodoPagamento;
   onMetodo: (metodo: MetodoPagamento) => void;
   telefone: string;
   onTelefone: (telefone: string) => void;
+  /** Com contexto, mostra o campo de cupão de desconto. */
+  cupom?: ContextoCupom;
 }) {
   const atual = METODOS.find((m) => m.value === metodo);
+
+  if (cupom && cupomCobreTudo(cupom.aplicado)) {
+    return (
+      <div className="space-y-4">
+        <CampoCupom {...cupom} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <BotaoVideosDaPagina local="PAGAMENTOS" />
+      {cupom && <CampoCupom {...cupom} />}
       <div className="grid grid-cols-2 gap-3">
         {METODOS.map(({ value, label, icon: Icon }) => (
           <button
@@ -163,7 +317,14 @@ export function EstadoPagamento({
       <div className="text-center py-4" role="status">
         <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
         <p className="font-bold text-gray-900 dark:text-white">Pagamento confirmado</p>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">{formatarValor(pagamento.valor)}</p>
+        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+          {pagamento.metodo === "cupom" ? "Gratuito com cupão de desconto" : formatarValor(pagamento.valor)}
+        </p>
+        {!!pagamento.desconto && pagamento.metodo !== "cupom" && (
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+            Poupou {formatarValor(pagamento.desconto)} com o cupão
+          </p>
+        )}
         {pagamento.invoiceUrl && (
           <a
             href={pagamento.invoiceUrl}

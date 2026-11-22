@@ -119,7 +119,7 @@ export const cursosApi = {
     return data;
   },
 
-  aderir: async (id: string, payload?: { metodo?: MetodoPagamento; phoneNumber?: string }) => {
+  aderir: async (id: string, payload?: { metodo?: MetodoPagamento; phoneNumber?: string; cupom?: string }) => {
     const { data } = await api.post<{ id: string; status: string; message: string; pagamento?: PagamentoMomenu }>(`/cursos/${id}/aderir`, payload, {
       headers: headersAfiliado("CURSO", id),
     });

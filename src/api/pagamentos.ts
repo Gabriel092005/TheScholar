@@ -5,7 +5,8 @@ export type MetodoPagamento = "momenu-mcx" | "reference";
 export interface PagamentoMomenu {
   id: string;
   transactionId?: string | null;
-  metodo: MetodoPagamento;
+  /** "cupom": pago a 100% com cupão, sem MoMenu. */
+  metodo: MetodoPagamento | "cupom";
   status: "PENDENTE" | "PAGO" | "FALHADO";
   valor: number;
   referenceNumber?: string | null;
@@ -13,6 +14,8 @@ export interface PagamentoMomenu {
   dueDate?: string | null;
   invoiceUrl?: string | null;
   falhaMotivo?: string | null;
+  valorOriginal?: number | null;
+  desconto?: number | null;
 }
 
 export const pagamentosApi = {

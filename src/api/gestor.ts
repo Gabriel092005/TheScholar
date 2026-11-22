@@ -161,7 +161,7 @@ export const gestorApi = {
     return data;
   },
 
-  comprarDocumento: async (id: string, payload: { metodo: MetodoPagamento; phoneNumber?: string }) => {
+  comprarDocumento: async (id: string, payload: { metodo?: MetodoPagamento; phoneNumber?: string; cupom?: string }) => {
     const { data } = await api.post<{ id: string; pagamento: PagamentoMomenu; message: string }>(
       `/documentos/${id}/comprar`,
       payload,

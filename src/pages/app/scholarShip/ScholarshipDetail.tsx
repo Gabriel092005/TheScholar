@@ -13,7 +13,8 @@ import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useUser } from "@/api/useGetProfile";
 import { CardAccent, Reveal, iconTile, userCard } from "@/components/user-ui";
-import { EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import { EstadoPagamento, SeletorPagamento, cupomCobreTudo, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import type { CupomAplicado } from "@/api/cupons";
 import type { MetodoPagamento, PagamentoMomenu } from "@/api/pagamentos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>("momenu-mcx");
   const [telefonePagamento, setTelefonePagamento] = useState("");
   const [pagamentoAtivo, setPagamentoAtivo] = useState<PagamentoMomenu | null>(null);
+  const [cupom, setCupom] = useState<CupomAplicado | null>(null);
   const [dataSelecionada, setDataSelecionada] = useState<string | null>(null);
   const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null);
 
@@ -125,6 +127,12 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       ? pacoteEscolhido?.valor
       : scholarship.inscriptionPrice;
   const servicoGratuito = valorServico !== undefined && valorServico <= 0;
+  const gratuitoComCupom = !servicoGratuito && cupomCobreTudo(cupom);
+
+  // Outro serviço: o cupão aplicado era para outro preço/tipo; o cliente aplica de novo se quiser.
+  useEffect(() => {
+    setCupom(null);
+  }, [tipoInteresse]);
 
   const inscricao = useMutation({
     mutationFn: async () => {
@@ -142,12 +150,13 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
       if (tipoInteresse === "MENTORIA" && pacoteEscolhido) {
         payload.append("mesesMentoria", String(pacoteEscolhido.meses));
       }
-      if (!servicoGratuito) {
+      if (!servicoGratuito && !gratuitoComCupom) {
         payload.append("metodoPagamento", metodoPagamento);
         if (metodoPagamento === "momenu-mcx") {
           payload.append("phoneNumber", normalizarTelefone(telefonePagamento));
         }
       }
+      if (!servicoGratuito && cupom) payload.append("cupom", cupom.codigo);
       if (tipoInteresse === "CONSULTORIA") {
         payload.append("observacoes", `Interesse: Consultoria - ${observacaoConsultoria}`);
       }
@@ -200,7 +209,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
         return;
       }
     }
-    if (!servicoGratuito && metodoPagamento === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
+    if (!servicoGratuito && !gratuitoComCupom && metodoPagamento === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
       toast.error("Indique um telefone válido com 9 dígitos, a começar por 9.");
       return;
     }
@@ -941,6 +950,11 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                         onMetodo={setMetodoPagamento}
                         telefone={telefonePagamento}
                         onTelefone={setTelefonePagamento}
+                        cupom={
+                          bolsaId && tipoInteresse && valorServico !== undefined
+                            ? { tipo: "BOLSA", itemId: bolsaId, valor: valorServico, aplicado: cupom, onAplicado: setCupom }
+                            : undefined
+                        }
                       />
                     )}
                   </section>
@@ -976,7 +990,7 @@ export function ScholarshipDetail({ scholarship, onBack, bolsaId, autoServico }:
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Processando...
                       </>
-                    ) : tipoInteresse && !servicoGratuito && metodoPagamento === "reference" ? (
+                    ) : tipoInteresse && !servicoGratuito && !gratuitoComCupom && metodoPagamento === "reference" ? (
                       <>
                         <CreditCard className="h-4 w-4 mr-2" />
                         Gerar referência

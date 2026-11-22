@@ -19,6 +19,8 @@ import { HistoriasPage } from './pages/app/historias';
 import { CrmPage } from './pages/app/crm/CrmPage';
 import { ComoFuncionaPage } from './pages/app/como-funciona';
 import { VideosAdmin } from './pages/admin/videos/VideosAdmin';
+import { AreaSocialAdmin } from './pages/admin/area-social/AreaSocialAdmin';
+import { CuponsAdmin } from './pages/admin/cupons/CuponsAdmin';
 import { AtendimentoLayout, CrmRedirect } from './pages/_layouts/atendimento';
 import { MinhasAtividadesPage } from './pages/app/minhas-atividades';
 import { CalendarioConsultorias } from './pages/app/consultorias/CalendarioConsultorias';
@@ -137,6 +139,8 @@ export const router = createBrowserRouter([
       { path: 'videos', element: <VideosAdmin /> },
       { path: 'comunidades', element: <ComunidadesAdmin /> },
       { path: 'usuarios', element: <UsuariosAdmin /> },
+      { path: 'area-social', element: <AreaSocialAdmin /> },
+      { path: 'cupons', element: <CuponsAdmin /> },
       { path: 'atendimento', element: <AtendimentoAdmin /> },
       { path: 'funil', element: <FunilAdmin /> },
       { path: 'crm', element: <CrmPage /> },

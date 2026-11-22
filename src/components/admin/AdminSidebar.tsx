@@ -13,6 +13,7 @@ import {
   Globe,
   GraduationCap,
   Headset,
+  HeartHandshake,
   Image as ImageIcon,
   LayoutDashboard,
   LifeBuoy,
@@ -20,6 +21,7 @@ import {
   MessagesSquare,
   Newspaper,
   Quote,
+  TicketPercent,
   UserCheck,
   Users,
   Video,
@@ -103,6 +105,12 @@ export const adminMenuGroups: SidebarMenuGroup[] = [
         description: "Receita e transações",
       },
       {
+        label: "Cupões",
+        href: "/admin/cupons",
+        icon: TicketPercent,
+        description: "Descontos nos pagamentos",
+      },
+      {
         label: "Análise Documentos",
         href: "/admin/analise-documento",
         icon: FileCheck2,
@@ -142,6 +150,12 @@ export const adminMenuGroups: SidebarMenuGroup[] = [
         href: "/admin/usuarios",
         icon: Users,
         description: "Contas e permissões",
+      },
+      {
+        label: "Área Social",
+        href: "/admin/area-social",
+        icon: HeartHandshake,
+        description: "Acesso de mentoria sem pagamento",
       },
       {
         label: "Atendimento",

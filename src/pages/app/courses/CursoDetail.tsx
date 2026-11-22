@@ -10,7 +10,8 @@ import {
   ChevronRight, ChevronLeft,
   PlayCircle, BarChart3, Award,
 } from "lucide-react";
-import { EstadoPagamento, SeletorPagamento, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import { EstadoPagamento, SeletorPagamento, cupomCobreTudo, normalizarTelefone, telefoneValido } from "@/components/pagamento-momenu";
+import type { CupomAplicado } from "@/api/cupons";
 import type { MetodoPagamento, PagamentoMomenu } from "@/api/pagamentos";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export function CursoDetail() {
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>("momenu-mcx");
   const [telefonePagamento, setTelefonePagamento] = useState("");
   const [pagamentoAtivo, setPagamentoAtivo] = useState<PagamentoMomenu | null>(null);
+  const [cupom, setCupom] = useState<CupomAplicado | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -119,12 +121,14 @@ export function CursoDetail() {
   const aderirMutation = useMutation({
     mutationFn: async () => {
       if (cursoGratuito) return cursosApi.aderir(id!);
+      if (cupomCobreTudo(cupom)) return cursosApi.aderir(id!, { cupom: cupom!.codigo });
       if (metodoPagamento === "momenu-mcx" && !telefoneValido(telefonePagamento)) {
         throw new Error("Indique um telefone válido com 9 dígitos, a começar por 9.");
       }
       return cursosApi.aderir(id!, {
         metodo: metodoPagamento,
         phoneNumber: metodoPagamento === "momenu-mcx" ? normalizarTelefone(telefonePagamento) : undefined,
+        cupom: cupom?.codigo,
       });
     },
     onSuccess: (resultado) => {
@@ -562,7 +566,11 @@ export function CursoDetail() {
                   <div className="flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-white/[0.03] px-4 py-3">
                     <span className="text-sm text-gray-500 dark:text-zinc-400">Total</span>
                     <span className="font-bold text-gray-900 dark:text-white">
-                      {cursoGratuito ? "Grátis" : formatPrice(Number(curso?.preco ?? 0))}
+                      {cursoGratuito
+                        ? "Grátis"
+                        : cupom
+                          ? cupomCobreTudo(cupom) ? "Grátis" : formatPrice(cupom.valorFinal)
+                          : formatPrice(Number(curso?.preco ?? 0))}
                     </span>
                   </div>
 
@@ -572,6 +580,7 @@ export function CursoDetail() {
                       onMetodo={setMetodoPagamento}
                       telefone={telefonePagamento}
                       onTelefone={setTelefonePagamento}
+                      cupom={{ tipo: "CURSO", itemId: id!, valor: Number(curso?.preco ?? 0), aplicado: cupom, onAplicado: setCupom }}
                     />
                   )}
 
@@ -583,7 +592,7 @@ export function CursoDetail() {
                       {aderirMutation.isPending ? (
                         <><Loader2 className="h-4 w-4 animate-spin mr-2" /> A processar...</>
                       ) : (
-                        <><CreditCard className="h-4 w-4 mr-2" /> {cursoGratuito ? "Obter curso" : metodoPagamento === "reference" ? "Gerar referência" : "Pagar"}</>
+                        <><CreditCard className="h-4 w-4 mr-2" /> {cursoGratuito || cupomCobreTudo(cupom) ? "Obter curso" : metodoPagamento === "reference" ? "Gerar referência" : "Pagar"}</>
                       )}
                     </Button>
                   </div>
