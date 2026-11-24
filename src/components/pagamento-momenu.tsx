@@ -248,7 +248,8 @@ export function SeletorPagamento({
             inputMode="numeric"
             value={telefone}
             onChange={(e) => onTelefone(e.target.value)}
-            placeholder="923 456 789"
+            placeholder="Digite o número do Express"
+            autoComplete="off"
             className="h-11 rounded-xl bg-gray-50 dark:bg-white/[0.04]"
           />
         </div>
